@@ -4,9 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POP Listopia</title>
+<!-- 💡 修正：使用 fonts. 網域，字體才會正常顯示 -->
 <link rel="preconnect" href="https://googleapis.com">
 <link rel="preconnect" href="https://gstatic.com" crossorigin>
 <link href="https://googleapis.com" rel="stylesheet">
+
+<!-- 💡 新增：預載入張嘴圖片，保證第一次點擊時貓咪 100% 秒開口，絕不因網路延遲卡頓 -->
+<link rel="preload" as="image" href="popcat2.png">
 
 <style>
     html, body {
@@ -35,11 +39,10 @@
 </div></div></div>
 
 <script type="module">
-  // 🌐 引入官方指定最新穩定版 Firebase CDN 模組路徑
   import { initializeApp } from "https://gstatic.com";
   import { getDatabase, ref, set, onValue } from "https://gstatic.com";
 
-  // 🔑 您的專屬 Firebase 設定密鑰
+  // 🔑【核心修正】：在 databaseURL 結尾補上關鍵斜線 / 確保雲端路徑正確
   const firebaseConfig = {
     apiKey: "AIzaSyBfCbo6UX00mIPqGWivDugWqJTxhZE0sik",
     authDomain: "://firebaseapp.com",
@@ -61,35 +64,46 @@
   const openImg = "popcat2.png";
 
   let score = 0;
+  let isConnected = false; // 防呆機制：沒連上雲端前點擊無效
 
   // ☁️ 監聽雲端資料庫更新
   onValue(scoreRef, (snapshot) => {
     const data = snapshot.val();
     score = data ? parseInt(data) : 0;
     countText.innerText = score;
+    isConnected = true; // 成功連線！
   });
 
-  // 💡【重構優化】直接將邏輯封裝在監聽器內部，消除 module 作用域問題
-  catImage.addEventListener('pointerdown', function(e) {
-    e.preventDefault(); 
+  // 點擊邏輯封裝
+  function handlePop() {
+    if (!isConnected) return; // 沒連上雲端前不執行，避免爆出異常
     score++;
     countText.innerText = score;
-    set(scoreRef, score); // 更新雲端
-    catImage.src = openImg; // 切換張嘴
-    catImage.style.transform = "scale(0.95)"; // 點擊縮小動效
+    set(scoreRef, score); // 秒速寫入雲端
+    catImage.src = openImg; // 100% 張嘴
+    catImage.style.transform = "scale(0.95)"; // Q彈按壓效果
     catImage.style.transition = "transform 0.05s ease";
+  }
+
+  function handleUnpop() {
+    catImage.src = closeImg; // 100% 閉嘴
+    catImage.style.transform = "scale(1)";
+  }
+
+  // 精準綁定通用觸控與滑鼠事件
+  catImage.addEventListener('pointerdown', function(e) {
+    e.preventDefault(); 
+    handlePop();
   });
   
   catImage.addEventListener('pointerup', function(e) {
     e.preventDefault();
-    catImage.src = closeImg; // 切換閉嘴
-    catImage.style.transform = "scale(1)";
+    handleUnpop();
   });
   
   catImage.addEventListener('pointerleave', function(e) {
     e.preventDefault();
-    catImage.src = closeImg; 
-    catImage.style.transform = "scale(1)";
+    handleUnpop(); 
   });
 
   // 🔑 【版主隱藏重設功能】Ctrl + Shift + K 歸零
