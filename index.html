@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pop Listopia</title>
   
-  <!-- 引入真正的 Google 雲端字體連結 -->
   <link href="https://googleapis.com" rel="stylesheet">
 
   <style>
@@ -45,95 +44,87 @@
   <div class="container">
     <div class="content">
       <h1 class="title">POP Listopia</h1>
-      <!-- 初始連線狀態 -->
       <span class="times" id="count">連線中...</span>
       
       <div class="image">
-        <!-- 預設閉嘴貓咪圖片網址 -->
         <img id="popcat" src="https://popcat.click" alt="popcat">
       </div>
-      <!-- 「啵」音效網址 -->
       <audio src="https://myinstants.com" class="pop"></audio>
     </div>
   </div>
 
   <script>
-    // 📌 核心修正：利用美國伺服器的標準直連 REST 端點網址
-    // 這種方式不帶有 API 金鑰，直接繞過所有防火牆網域限制，在 GitHub Pages 環境下能完美取得綠燈放行
-    const dbUrl = "https://firebaseio.com";
+    // 📌 核心修正：改用防攔截的 CounterAPI 標準公用通道
+    // 我們幫您的專屬遊戲建立了獨立的命名空間 (pop_listopia_live)
+    const getUrl = "https://counterapi.dev";
+    const hitUrl = "https://counterapi.dev/up";
 
     const catImage = document.getElementById('popcat');
     const countText = document.getElementById('count');
     const audio = document.querySelector('.pop');
 
-    // 閉嘴與張嘴的高清檔案路徑
     const closeImg = "https://popcat.click";
     const openImg = "https://popcat.click";
 
     let localScore = 0;
 
-    // 💾 讀取雲端眾人的最新點擊總數
+    // 💾 讀取雲端最新全球總數
     function fetchGlobalClicks() {
-      fetch(dbUrl)
+      fetch(getUrl)
         .then(response => {
-          if (!response.ok) {
-            throw new Error("HTTP 狀態錯誤: " + response.status);
-          }
+          // 如果計數器在雲端是全新的，會回傳 404，我們手動視為 0
+          if (response.status === 404) return { value: 0 };
           return response.json();
         })
         .then(data => {
-          // 如果雲端尚未初始化，預設為 0
-          localScore = data !== null ? parseInt(data) : 0;
-          countText.innerText = localScore;
+          if (data && data.value !== undefined) {
+            localScore = parseInt(data.value);
+            countText.innerText = localScore;
+          }
         })
         .catch(error => {
           console.error("同步延遲:", error);
-          countText.innerText = "連線失敗";
+          countText.innerText = "同步中...";
         });
     }
 
-    // 網頁一打開，立刻執行一次全網同步讀取
+    // 網頁打開立刻同步一次
     fetchGlobalClicks();
 
-    // 🔄 每隔 1.5 秒自動在背景重新向雲端抓取一次全世界最新的總點擊數，達成全球同步效果
-    setInterval(fetchGlobalClicks, 1500);
+    // 🔄 每 2 秒自動在背景重新抓取一次全網最新總數，達成全球同步
+    setInterval(fetchGlobalClicks, 2000);
 
     // 點擊觸發函數
     function pop() {
-      // 為了讓玩家有極致流暢的打擊感，本地畫面先立刻加 1
+      // 本地數字先立刻加 1，維持流暢打擊感
       localScore++;
       countText.innerText = localScore;
 
-      // 貓咪換成張嘴
       catImage.src = openImg;
       audio.currentTime = 0;
       audio.play();
 
-      // 📌 點擊加分：利用標準 PUT 網路封包將新分數送回您的 Firebase 美國雲端
-      fetch(dbUrl, {
-        method: 'PUT',
-        body: JSON.stringify(localScore),
-        headers: { 'Content-Type': 'application/json' }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if(data !== null) {
-          localScore = data;
-          countText.innerText = localScore;
-        }
-      })
-      .catch(error => console.error("雲端更新失敗:", error));
+      // 📌 點擊加分：利用標準的公共 hit 請求把分數送上雲端
+      fetch(hitUrl)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.value !== undefined) {
+            localScore = data.value;
+            countText.innerText = localScore;
+          }
+        })
+        .catch(error => console.error("加分失敗:", error));
     }
 
     function unpop() {
       catImage.src = closeImg;
     }
 
-    // 事件監聽（完美相容電腦滑鼠與手機觸控，全面優化防延遲）
+    // 事件監聽（相容電腦與手機）
     catImage.addEventListener('mousedown', pop);
     catImage.addEventListener('mouseup', unpop);
     catImage.addEventListener('touchstart', function(e) {
-      e.preventDefault(); // 防止手機雙擊放大
+      e.preventDefault(); 
       pop();
     });
     catImage.addEventListener('touchend', unpop);
