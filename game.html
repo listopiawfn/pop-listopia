@@ -45,75 +45,70 @@
   <div class="container">
     <div class="content">
       <h1 class="title">POP Listopia</h1>
-      <!-- 初始連線狀態 -->
-      <span class="times" id="count">連線中...</span>
+      <!-- 📌 修正：不再顯示連線中，秒速顯示儲存的次數 -->
+      <span class="times" id="count">0</span>
       
       <div class="image">
-        <!-- 去背閉嘴貓咪圖片 -->
+        <!-- 高清去背貓咪圖片 -->
         <img id="popcat" src="https://popcat.click" alt="popcat">
       </div>
     </div>
   </div>
 
-  <!-- 📌 正規官方 SDK：走 WebSocket 加密通道，不使用 fetch，100% 免疫任何 JSON 解析錯誤 -->
-  <script src="https://gstatic.com"></script>
-  <script src="https://gstatic.com"></script>
-
   <script>
-    // 您的專屬 Firebase 美國伺服器憑證
-    const firebaseConfig = {
-      apiKey: "AIzaSyA0VTxTbo3qxT3e2ViJGqSg3SaZAmdyIC4",
-      authDomain: "://firebaseapp.com",
-      databaseURL: "https://firebaseio.com",
-      projectId: "pop-listopia",
-      storageBucket: "pop-listopia.firebasestorage.app",
-      messagingSenderId: "660982819274",
-      appId: "1:660982819274:web:7e11e6688209d8e0304733",
-      measurementId: "G-5WV47WF961"
-    };
-
-    // 初始化 Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const scoreRef = db.ref('global_clicks'); 
-
     const catImage = document.getElementById('popcat');
     const countText = document.getElementById('count');
 
     const closeImg = "https://popcat.click";
     const openImg = "https://popcat.click";
 
-    // 💾 實時監聽：只要雲端數字變了，全世界所有打開此網頁的人畫面都會同步更新
-    scoreRef.on('value', function(snapshot) {
-      const data = snapshot.val();
-      countText.innerText = data !== null ? data : 0;
-    }, function(error) {
-      console.error("Firebase 連線遭拒:", error);
-      countText.innerText = "連線失敗";
-    });
+    // 💾 初始化分數：從本地瀏覽器記憶體安全讀取，重開機、關網頁都不會消失
+    let score = localStorage.getItem('popcat_score') ? parseInt(localStorage.getItem('popcat_score')) : 0;
+    countText.innerText = score;
 
     // 點擊觸發函數
     function pop() {
-      // 官方最高級的 transaction 事務處理：防多人同時狂點數字打架
-      scoreRef.transaction(function(currentClicks) {
-        return (currentClicks || 0) + 1;
-      });
+      score++;
+      countText.innerText = score;
+
+      // 💾 即時在瀏覽器空間寫入最新的分數紀錄
+      localStorage.setItem('popcat_score', score);
+
       catImage.src = openImg;
     }
 
-    // 放開滑鼠換回閉嘴
     function unpop() {
       catImage.src = closeImg;
     }
 
-    // 事件監聽（相容電腦與手機，移除連點卡頓）
+    // 事件監聽（相容電腦滑鼠與手機觸控，全面優化防止連點卡頓）
     catImage.addEventListener('mousedown', pop);
     catImage.addEventListener('mouseup', unpop);
     catImage.addEventListener('touchstart', function(e) {
-      e.preventDefault(); 
+      e.preventDefault(); // 優化手機瘋狂連點
       pop();
     });
     catImage.addEventListener('touchend', unpop);
+
+    // 🔑 【版主隱藏暗號功能】畫面上不會出現任何按鈕！
+    // 只要您在網頁的畫面上任何地方，快速同時按下鍵盤的 Ctrl + Shift + K 三個鍵
+    window.addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
+        
+        // 彈出一個隱藏視窗詢問密碼
+        const password = prompt('請輸入版主重設密碼：');
+        
+        // 💡 密碼預設為：admin123 （您可以自己把它改成其他英文或數字）
+        if (password === 'admin123') {
+          score = 0;
+          countText.innerText = score;
+          localStorage.removeItem('popcat_score');
+          alert('版主身份驗證成功，點擊次數已成功歸零重置！');
+        } else if (password !== null) {
+          alert('密碼錯誤，拒絕重設！');
+        }
+      }
+    });
   </script>
 </body>
 </html>
