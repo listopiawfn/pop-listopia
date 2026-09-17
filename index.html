@@ -1,15 +1,18 @@
-<html>
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pop Listopia</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<title>POP Listopia</title>
+<link rel="preconnect" href="https://googleapis.com">
+<link rel="preconnect" href="https://gstatic.com" crossorigin>
+<link href="https://googleapis.com/css2?family=Caesar+Dressing&display=swap" rel="stylesheet">
 
-  <style>
+<style>
     html, body {
       margin: 0;
       padding: 0;
+      background-color: #f0f0f0;
     }
     .container {
       width: 100%;
@@ -21,6 +24,7 @@
       font-family: "Caesar Dressing", cursive;
       color: #000;
       user-select: none; 
+      -webkit-user-select: none;
     }
     .content .title {
       font-size: 60px;
@@ -29,16 +33,24 @@
     }
     .content .times {
       font-size: 40px;
+      margin-bottom: 20px;
     }
     .content .image {
       width: 300px;
+      margin: 0 auto;
       cursor: pointer; 
     }
     .image img {
       width: 100%;
+      display: block;
     }
-  </style>
+    
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+</style>
 </head>
+  
 <body>
   <div class="container">
     <div class="content">
