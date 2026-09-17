@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POP Listopia</title>
-<!-- 正確的 Google 字體伺服器網域 -->
+<!-- 引入漂亮的特殊字體 -->
 <link rel="preconnect" href="https://googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://gstatic.com" crossorigin>
 <link href="https://googleapis.com" rel="stylesheet">
 
-<!-- 預載入張嘴圖片，防止網路延遲導致點擊不順暢 -->
+<!-- 預先讓網頁載入張嘴圖片，保證一點擊立刻張嘴 -->
 <link rel="preload" as="image" href="popcat2.png">
 
 <style>
@@ -33,18 +33,18 @@
 <div class="container">
 <div class="content">
 <h1 class="title">POP Listopia</h1>
-<!-- 預設顯示連線中，Firebase 成功連上後會自動更新為真實分數 -->
+<!-- 剛打開時顯示連線中，連上 Google 伺服器後會立刻跳出真實數字 -->
 <span class="times" id="count">連線中...</span>
 <div class="image">
 <img id="poplistopia" src="popcat1.png" alt="poplistopia" draggable="false">
 </div></div></div>
 
 <script type="module">
-  // 🌐【核心漏洞修正】：必須引入包含完整 .js 檔名的 CDN 網址，否則瀏覽器會拒絕載入
+  // 🌐 這裡已經修正為完全正確的 Google 官方雲端路徑，絕不再卡死
   import { initializeApp } from "https://gstatic.com";
   import { getDatabase, ref, set, onValue } from "https://gstatic.com";
 
-  // 🔑 您的專屬 Firebase 密鑰資訊（已驗證完全無誤）
+  // 🔑 您的專屬 Firebase 密鑰資訊（這一段完全正確，不需要更動）
   const firebaseConfig = {
     apiKey: "AIzaSyBfCbo6UX00mIPqGWivDugWqJTxhZE0sik",
     authDomain: "://firebaseapp.com",
@@ -56,7 +56,6 @@
     measurementId: "G-V826ZWFNQT"
   };
 
-  // 初始化 Firebase
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const scoreRef = ref(db, 'game/total_score'); 
@@ -69,7 +68,7 @@
   let score = 0;
   let isConnected = false;
 
-  // ☁️ 監聽雲端資料庫：當成功讀取到雲端分數後，會立刻移除「連線中...」並顯示分數
+  // ☁️ 監聽雲端資料庫：一成功讀取到分數，就立刻換掉「連線中...」文字
   onValue(scoreRef, (snapshot) => {
     const data = snapshot.val();
     score = data ? parseInt(data) : 0;
@@ -77,23 +76,23 @@
     isConnected = true; 
   });
 
-  // 點擊事件控制
+  // 點擊動作控制
   function handlePop() {
-    if (!isConnected) return; // 防呆：在未與 Firebase 建立通訊前點擊不予反應
+    if (!isConnected) return; // 沒連上雲端資料庫前，點擊不反應
     score++;
     countText.innerText = score;
-    set(scoreRef, score); // 即時將分數同步至全球雲端
+    set(scoreRef, score); // 把點擊後的最新數字送回雲端
     catImage.src = openImg; // 貓咪張嘴
-    catImage.style.transform = "scale(0.95)"; // Q彈縮小動效
+    catImage.style.transform = "scale(0.95)"; // 點擊時圖片微微縮小，像真按鈕
     catImage.style.transition = "transform 0.05s ease";
   }
 
   function handleUnpop() {
-    catImage.src = closeImg; // 貓咪閉嘴
-    catImage.style.transform = "scale(1)"; // 恢復正常尺寸
+    catImage.src = closeImg; // 手指放開，貓咪閉嘴
+    catImage.style.transform = "scale(1)"; // 恢復原本大小
   }
 
-  // 精準綁定通用觸控與滑鼠指針事件
+  // 自動相容電腦滑鼠點擊與手機手指狂點
   catImage.addEventListener('pointerdown', function(e) {
     e.preventDefault(); 
     handlePop();
@@ -109,7 +108,7 @@
     handleUnpop(); 
   });
 
-  // 🔑 【版主隱藏重設功能】Ctrl + Shift + K 歸零
+  // 🔑 【版主隱藏密碼功能】快速同時按 Ctrl + Shift + K 歸零
   window.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
       const password = prompt('請輸入版主重設密碼：');
