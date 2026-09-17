@@ -4,28 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POP Listopia</title>
-<!-- 引入漂亮的特殊字體 -->
 <link rel="preconnect" href="https://googleapis.com">
 <link rel="preconnect" href="https://gstatic.com" crossorigin>
 <link href="https://googleapis.com" rel="stylesheet">
-
-<!-- 預先讓網頁載入張嘴圖片，保證一點擊立刻張嘴 -->
 <link rel="preload" as="image" href="popcat2.png">
-
 <style>
-    html, body {
-      margin: 0; padding: 0; background-color: #f0f0f0;
-    }
-    .container {
-      width: 100%; height: 100vh; display: flex; justify-content: center;
-      align-items: center; text-align: center; font-family: "Caesar Dressing", cursive;
-      color: #000; user-select: none; -webkit-user-select: none;
-    }
-    .content .title { font-size: 60px; letter-spacing: 10px; margin: 0 0 20px 0; }
-    .content .times { font-size: 40px; margin-bottom: 20px; display: block; }
-    .content .image { width: 300px; margin: 0 auto; cursor: pointer; }
-    .image img { width: 100%; display: block; }
-    * { -webkit-tap-highlight-color: transparent; }
+   html, body {
+     margin: 0; padding: 0; background-color: #f0f0f0;
+   }
+   .container {
+     width: 100%; height: 100vh; display: flex; justify-content: center;
+     align-items: center; text-align: center; font-family: "Caesar Dressing", cursive;
+     color: #000; user-select: none; -webkit-user-select: none;
+   }
+   .content .title { font-size: 60px; letter-spacing: 10px; margin: 0 0 20px 0; }
+   .content .times { font-size: 40px; margin-bottom: 20px; display: block; }
+   .content .image { width: 300px; margin: 0 auto; cursor: pointer; }
+   .image img { width: 100%; display: block; }
+   * { -webkit-tap-highlight-color: transparent; }
 </style>
 </head>
   
@@ -41,8 +37,8 @@
 
 <script type="module">
   // 🌐 這裡已經修正為完全正確的 Google 官方雲端路徑，絕不再卡死
-  import { initializeApp } from "https://gstatic.com";
-  import { getDatabase, ref, set, onValue } from "https://gstatic.com";
+  import { initializeApp } from "https://cloudflare.com";
+  import { getDatabase, ref, set, onValue } from "https://cloudflare.com";
 
   // 🔑 您的專屬 Firebase 密鑰資訊（這一段完全正確，不需要更動）
   const firebaseConfig = {
