@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pop Listopia</title>
   
-  <!-- 引入真正的 Google 雲端字體 -->
   <link href="https://googleapis.com" rel="stylesheet">
 
   <style>
@@ -48,20 +47,17 @@
       <span class="times" id="count">連線中...</span>
       
       <div class="image">
-        <!-- 預設去背閉嘴貓咪圖片網址 -->
         <img id="popcat" src="https://popcat.click" alt="popcat">
       </div>
-      <!-- 「啵」經典音效網址 -->
       <audio src="https://myinstants.com" class="pop"></audio>
     </div>
   </div>
 
-  <!-- 📌 核心修正：載入官方標準核心與資料庫庫，走 WebSocket 專用安全加密通道 -->
+  <!-- 📌 載入官方標準核心庫，改走 WebSocket 加密通道，徹底告別 Failed to fetch -->
   <script src="https://gstatic.com"></script>
   <script src="https://gstatic.com"></script>
 
   <script>
-    // 您的專屬 Firebase 美國伺服器設定憑證
     const firebaseConfig = {
       apiKey: "AIzaSyA0VTxTbo3qxT3e2ViJGqSg3SaZAmdyIC4",
       authDomain: "://firebaseapp.com",
@@ -73,10 +69,9 @@
       measurementId: "G-5WV47WF961"
     };
 
-    // 初始化 Firebase 與 雲端資料庫
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const scoreRef = db.ref('global_clicks'); // 在雲端指向全網點擊總數欄位
+    const scoreRef = db.ref('global_clicks'); 
 
     const catImage = document.getElementById('popcat');
     const countText = document.getElementById('count');
@@ -85,20 +80,16 @@
     const closeImg = "https://popcat.click";
     const openImg = "https://popcat.click";
 
-    // 💾 官方 WebSocket 即時雙向監聽：只要雲端數字變了，網頁會自動一秒更新，完全不延遲
+    // 💾 官方雙向即時監聽機制
     scoreRef.on('value', function(snapshot) {
       const data = snapshot.val();
-      // 如果雲端是空的（null），預設給它 0，否則顯示最新全球總數
       countText.innerText = data !== null ? data : 0;
     }, function(error) {
-      console.error("Firebase 連線遭拒，請確認後台安全性規則是否已點擊發布:", error);
+      console.error("Firebase 連線遭拒:", error);
       countText.innerText = "連線失敗";
     });
 
-    // 點擊觸發函數
     function pop() {
-      // 📌 核心加分：採用 Firebase 官方最高級的 transaction 事務處理
-      // 當全世界幾百個人同時拿起手機、電腦瘋狂點擊時，Google 伺服器會自動排隊精準累加，數字絕對不卡死或錯亂
       scoreRef.transaction(function(currentClicks) {
         return (currentClicks || 0) + 1;
       });
@@ -112,11 +103,10 @@
       catImage.src = closeImg;
     }
 
-    // 事件監聽（完美相容電腦滑鼠與手機觸控，防連點延遲）
     catImage.addEventListener('mousedown', pop);
     catImage.addEventListener('mouseup', unpop);
     catImage.addEventListener('touchstart', function(e) {
-      e.preventDefault(); // 優化手機連點體驗，防止觸發瀏覽器模擬滑鼠
+      e.preventDefault(); 
       pop();
     });
     catImage.addEventListener('touchend', unpop);
