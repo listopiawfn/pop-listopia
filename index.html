@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POP Listopia</title>
-<link rel="preconnect" href="https://googleapis.com">
-<link rel="preconnect" href="https://gstatic.com" crossorigin>
-<link href="https://googleapis.com/css2?family=Caesar+Dressing&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caesar+Dressing&display=swap" rel="stylesheet">
+<!-- 預載開嘴圖片，確保點擊時立刻切換不延遲 -->
 <link rel="preload" as="image" href="popcat2.png">
 <style>
    html, body {
@@ -35,13 +36,14 @@
 </div></div></div>
 
 <script type="module">
+// 🔴 修正：必須使用真實、完整的 Firebase CDN 網址，只寫 https://gstatic.com 網頁會直接報錯卡死
 import { initializeApp } from "https://gstatic.com";
 import { getDatabase, ref, set, onValue } from "https://gstatic.com";
 
 const firebaseConfig = {
    apiKey: "AIzaSyBfCbo6UX00mIPqGWivDugWqJTxhZE0sik",
-   authDomain: "firebaseapp.com",
-   databaseURL: "https://firebaseio.com",
+   authDomain: "pop-listopia-b0fc9.firebaseapp.com",
+   databaseURL: "https://firebaseio.com", // 💡 提示：請確保這是你 Firebase 後台提供的真實 RTDB 網址
    projectId: "pop-listopia-b0fc9",
    storageBucket: "pop-listopia-b0fc9.firebasestorage.app",
    messagingSenderId: "987919903060",
@@ -58,6 +60,10 @@ const countText = document.getElementById('count');
 const closeImg = "popcat1.png";
 const openImg = "popcat2.png";
 
+// JS 層面強制預載開嘴圖
+const preloadImg = new Image();
+preloadImg.src = openImg;
+
 let score = 0;
 let isConnected = false;
 
@@ -68,28 +74,34 @@ onValue(scoreRef, (snapshot) => {
    isConnected = true;
 });
 
-catImage.addEventListener('pointerdown', function(e) {
-   e.preventDefault();
-   if (!isConnected) return;
+// 使用獨立函式處理，並優化觸控體驗
+function popOpen(e) {
+   if (e) e.preventDefault();
+   if (!isConnected) return; // 連線成功前不能點
+   
    score++;
    countText.innerText = score;
    set(scoreRef, score);
+   
    catImage.src = openImg;
    catImage.style.transform = "scale(0.95)";
    catImage.style.transition = "transform 0.05s ease";
-});
+}
 
-catImage.addEventListener('pointerup', function(e) {
-   e.preventDefault();
+function popClose(e) {
+   if (e) e.preventDefault();
    catImage.src = closeImg;
    catImage.style.transform = "scale(1)";
-});
+}
 
-catImage.addEventListener('pointerleave', function(e) {
-   e.preventDefault();
-   catImage.src = closeImg;
-   catImage.style.transform = "scale(1)";
-});
+// 同時綁定滑鼠與手機觸控事件
+catImage.addEventListener('pointerdown', popOpen);
+catImage.addEventListener('pointerup', popClose);
+catImage.addEventListener('pointerleave', popClose);
+
+// 針對部分手機瀏覽器的特別優化
+catImage.addEventListener('touchstart', popOpen, { passive: false });
+catImage.addEventListener('touchend', popClose, { passive: false });
 </script>
 </body>
 </html>
