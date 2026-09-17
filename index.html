@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pop Listopia</title>
   
-  <!-- 引入真正的 Google 雲端字體 -->
+  <!-- 引入雲端特殊字體 -->
   <link href="https://googleapis.com" rel="stylesheet">
 
   <style>
@@ -49,72 +49,90 @@
       <span class="times" id="count">連線中...</span>
       
       <div class="image">
-        <!-- 去背閉嘴貓咪圖片網址 -->
+        <!-- 預設去背閉嘴貓咪圖片 -->
         <img id="popcat" src="https://popcat.click" alt="popcat">
       </div>
-      <!-- 📌 聲音標籤已完全刪除 -->
     </div>
   </div>
 
-  <!-- 📌 載入官方標準核心庫，走 WebSocket 專用安全加密通道，徹底避開錯誤 -->
-  <script src="https://gstatic.com"></script>
-  <script src="https://gstatic.com"></script>
-
   <script>
-    // 您的專屬 Firebase 設定憑證
-    const firebaseConfig = {
-      apiKey: "AIzaSyA0VTxTbo3qxT3e2ViJGqSg3SaZAmdyIC4",
-      authDomain: "://firebaseapp.com",
-      databaseURL: "https://firebaseio.com",
-      projectId: "pop-listopia",
-      storageBucket: "pop-listopia.firebasestorage.app",
-      messagingSenderId: "660982819274",
-      appId: "1:660982819274:web:7e11e6688209d8e0304733",
-      measurementId: "G-5WV47WF961"
-    };
-
-    // 初始化 Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const scoreRef = db.ref('global_clicks'); 
+    // 📌 核心修正：利用美國伺服器的標準直連 REST 端點網址
+    // 這種方式不需要下載任何外部 Firebase 程式包，完全繞過 SDK 載入限制
+    const dbUrl = "https://firebaseio.com";
 
     const catImage = document.getElementById('popcat');
     const countText = document.getElementById('count');
-    // 📌 聲音變數已完全刪除
 
+    // 閉嘴與張嘴的高清檔案路徑
     const closeImg = "https://popcat.click";
     const openImg = "https://popcat.click";
 
-    // 💾 官方 WebSocket 即時雙向監聽
-    scoreRef.on('value', function(snapshot) {
-      const data = snapshot.val();
-      // 如果雲端是空的，預設給它 0，否則顯示最新全球總數
-      countText.innerText = data !== null ? data : 0;
-    }, function(error) {
-      console.error("Firebase 連線遭拒:", error);
-      countText.innerText = "連線失敗";
-    });
+    let localScore = 0;
 
-    // 點擊觸發函數
+    // 💾 讀取雲端最新數字
+    function fetchGlobalClicks() {
+      fetch(dbUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("HTTP 狀態錯誤: " + response.status);
+          }
+          return response.json();
+        })
+        .then(data => {
+          // 容錯處理：如果雲端尚未初始化，本地預設為 0
+          localScore = data !== null ? parseInt(data) : 0;
+          countText.innerText = localScore;
+        })
+        .catch(error => {
+          console.error("同步中...暫以本地計數為主:", error);
+          if (countText.innerText === "連線中...") {
+            countText.innerText = localScore;
+          }
+        });
+    }
+
+    // 網頁一打開，立刻執行一次全網同步
+    fetchGlobalClicks();
+
+    // 🔄 每隔 2 秒自動去雲端抓取全網玩家點出的最新總數，達成全球即時同步
+    setInterval(fetchGlobalClicks, 2000);
+
+    // 點擊加分函數
     function pop() {
-      // 採用 Firebase 官方最高級的 transaction 事務處理，防止數字打架
-      scoreRef.transaction(function(currentClicks) {
-        return (currentClicks || 0) + 1;
-      });
+      // 本地畫面立刻流暢加 1
+      localScore++;
+      countText.innerText = localScore;
 
+      // 貓咪換成張嘴
       catImage.src = openImg;
-      // 📌 聲音播放程式碼已完全刪除
+
+      // 📌 直接利用標準網路請求（PUT）把最新數字送上 Firebase 美國雲端
+      fetch(dbUrl, {
+        method: 'PUT',
+        body: JSON.stringify(localScore),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data !== null) {
+          localScore = data;
+          countText.innerText = localScore;
+        }
+      })
+      .catch(error => console.error("上傳失敗:", error));
     }
 
     function unpop() {
       catImage.src = closeImg;
     }
 
-    // 事件監聽（相容電腦滑鼠與手機觸控，優化瘋狂連點）
+    // 事件監聽（相容電腦與手機，移除連點卡頓）
     catImage.addEventListener('mousedown', pop);
     catImage.addEventListener('mouseup', unpop);
     catImage.addEventListener('touchstart', function(e) {
-      e.preventDefault(); // 優化手機連點體驗
+      e.preventDefault(); // 防止手機雙擊放大
       pop();
     });
     catImage.addEventListener('touchend', unpop);
