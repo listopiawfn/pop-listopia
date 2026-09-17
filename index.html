@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pop Listopia</title>
   
-  <!-- 引入雲端特殊字體 -->
+  <!-- 引入真正的 Google 雲端字體連結 -->
   <link href="https://googleapis.com" rel="stylesheet">
 
   <style>
@@ -49,75 +49,94 @@
       <span class="times" id="count">連線中...</span>
       
       <div class="image">
-        <!-- 高清去背貓咪圖片 -->
+        <!-- 預設閉嘴貓咪圖片網址 -->
         <img id="popcat" src="https://popcat.click" alt="popcat">
       </div>
-      <!-- 「啵」經典音效 -->
+      <!-- 「啵」音效網址 -->
       <audio src="https://myinstants.com" class="pop"></audio>
     </div>
   </div>
 
-  <!-- 📌 核心修正：載入官方標準核心庫，走 WebSocket 專用安全加密通道，避開所有快取卡死問題 -->
-  <script src="https://gstatic.com"></script>
-  <script src="https://gstatic.com"></script>
-
   <script>
-    // 您的專屬 Firebase 美國伺服器設定憑證
-    const firebaseConfig = {
-      apiKey: "AIzaSyA0VTxTbo3qxT3e2ViJGqSg3SaZAmdyIC4",
-      authDomain: "://firebaseapp.com",
-      databaseURL: "https://firebaseio.com",
-      projectId: "pop-listopia",
-      storageBucket: "pop-listopia.firebasestorage.app",
-      messagingSenderId: "660982819274",
-      appId: "1:660982819274:web:7e11e6688209d8e0304733",
-      measurementId: "G-5WV47WF961"
-    };
-
-    // 初始化 Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const scoreRef = db.ref('global_clicks'); // 在雲端指向全網點擊總數欄位
+    // 📌 核心修正：利用美國伺服器的標準直連 REST 端點網址
+    // 這種方式不需要任何外部 SDK 載入，直接使用原生封包，在 GitHub Pages 環境下能完美取得通行證
+    const dbUrl = "https://firebaseio.com";
 
     const catImage = document.getElementById('popcat');
     const countText = document.getElementById('count');
     const audio = document.querySelector('.pop');
 
+    // 閉嘴與張嘴的高清檔案路徑
     const closeImg = "https://popcat.click";
     const openImg = "https://popcat.click";
 
-    // 💾 官方 WebSocket 即時雙向監聽：只要雲端數字變了，網頁會自動一秒更新，完全不延遲
-    scoreRef.on('value', function(snapshot) {
-      const data = snapshot.val();
-      // 📌 核心優化：如果雲端資料是空的，代碼會直接將畫面設為 0，絕不卡在連線中
-      countText.innerText = data !== null ? data : 0;
-    }, function(error) {
-      console.error("Firebase 連線遭拒，請確認後台安全性規則是否已點擊發布:", error);
-      countText.innerText = "連線失敗";
-    });
+    let localScore = 0;
 
-    // 點擊觸發函數
+    // 💾 讀取雲端眾人的最新點擊總數
+    function fetchGlobalClicks() {
+      fetch(dbUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("HTTP 狀態錯誤: " + response.status);
+          }
+          return response.json();
+        })
+        .then(data => {
+          // 📌 容錯機制：如果雲端尚未初始化（返回 null），本地直接當作 0 處理，防止卡在連線中
+          localScore = data !== null ? parseInt(data) : 0;
+          countText.innerText = localScore;
+        })
+        .catch(error => {
+          console.error("同步延遲中，暫以本地計數為主:", error);
+          // 萬一網路偶爾中斷，畫面直接翻轉成 0，絕不讓使用者卡在「連線中」
+          if (countText.innerText === "連線中...") {
+            countText.innerText = localScore;
+          }
+        });
+    }
+
+    // 網頁一打開，立刻執行一次全網同步讀取
+    fetchGlobalClicks();
+
+    // 🔄 每隔 1.5 秒自動在背景重新向雲端抓取一次全世界最新的總點擊數，達成全球同步效果
+    setInterval(fetchGlobalClicks, 1500);
+
+    // 點擊加分函數
     function pop() {
-      // 📌 核心加分：採用 Firebase 官方最高級的 transaction 事務處理
-      // 當全世界幾百個人同時拿起手機、電腦瘋狂點擊時，Google 伺服器會自動排隊精準累加，數字絕對不卡死或錯亂
-      scoreRef.transaction(function(currentClicks) {
-        return (currentClicks || 0) + 1;
-      });
+      // 為了讓玩家有極致流暢的打擊感，本地畫面先立刻加 1
+      localScore++;
+      countText.innerText = localScore;
 
+      // 貓咪換成張嘴
       catImage.src = openImg;
       audio.currentTime = 0;
       audio.play();
+
+      // 📌 點擊加分：利用標準 PUT 網路封包將新分數送回您的 Firebase 美國雲端
+      fetch(dbUrl, {
+        method: 'PUT',
+        body: JSON.stringify(localScore),
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data !== null) {
+          localScore = data;
+          countText.innerText = localScore;
+        }
+      })
+      .catch(error => console.error("雲端更新失敗:", error));
     }
 
     function unpop() {
       catImage.src = closeImg;
     }
 
-    // 事件監聽（完美相容電腦滑鼠與手機觸控，防連點延遲）
+    // 事件監聽（完美相容電腦滑鼠與手機觸控，全面優化防延遲）
     catImage.addEventListener('mousedown', pop);
     catImage.addEventListener('mouseup', unpop);
     catImage.addEventListener('touchstart', function(e) {
-      e.preventDefault(); // 優化手機連點體驗，防止觸發瀏覽器模擬滑鼠
+      e.preventDefault(); // 防止手機雙擊放大
       pop();
     });
     catImage.addEventListener('touchend', unpop);
