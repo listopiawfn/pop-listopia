@@ -36,16 +36,12 @@ const countText = document.getElementById('count');
 const closeImg = "popcat1.png?v=" + Date.now();
 const openImg = "popcat2.png?v=" + Date.now();
 
-// 預載圖片
 const preloadImg = new Image();
 preloadImg.src = openImg;
 
 let score = 0;
-
-// 🔴 這裡直接使用 Firebase 提供的原生資料庫 REST API 網址 (後面加上 .json)
 const dbUrl = "https://pop-listopia-b0fc9-default-rtdb.firebaseio.com/game/total_score.json";
 
-// 1. 網頁一打開，直接從雲端讀取最新分數
 function loadScore() {
    fetch(dbUrl)
       .then(res => res.json())
@@ -55,10 +51,9 @@ function loadScore() {
             countText.innerText = score;
          }
       })
-      .catch(err => console.error("讀取雲端失敗:", err));
+      .catch(err => console.error("讀取失敗:", err));
 }
 
-// 2. 當玩家點擊時，立刻加分並將最新分數用 PUT 方法覆蓋儲存到雲端
 function popOpen(e) {
    if (e) e.preventDefault();
    score++;
@@ -68,7 +63,6 @@ function popOpen(e) {
    catImage.style.transform = "scale(0.95)";
    catImage.style.transition = "transform 0.02s ease";
 
-   // 在背景默默把最新的總分數發送至雲端儲存
    fetch(dbUrl, {
       method: "PUT",
       body: JSON.stringify(score)
@@ -81,13 +75,10 @@ function popClose(e) {
    catImage.style.transform = "scale(1)";
 }
 
-// 網頁載入時自動執行一次讀取
 loadScore();
 
-// 定時每 3 秒自動更新一次畫面，確保別部電腦點擊的分數也能同步更新過來
 setInterval(loadScore, 3000);
 
-// 事件監聽
 catImage.addEventListener('pointerdown', popOpen);
 catImage.addEventListener('pointerup', popClose);
 catImage.addEventListener('pointerleave', popClose);
