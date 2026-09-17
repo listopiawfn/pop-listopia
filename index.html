@@ -49,35 +49,19 @@
       <span class="times" id="count">連線中...</span>
       
       <div class="image">
-        <!-- 去背閉嘴貓咪圖片網址 -->
+        <!-- 去背閉嘴貓咪圖片 -->
         <img id="popcat" src="https://popcat.click" alt="popcat">
       </div>
-      <!-- 「啵」音效網址 -->
+      <!-- 「啵」經典音效 -->
       <audio src="https://myinstants.com" class="pop"></audio>
     </div>
   </div>
 
-  <!-- 📌 核心修正：載入官方標準核心與資料庫庫，走 WebSocket 專用安全加密通道 -->
-  <script src="https://gstatic.com"></script>
-  <script src="https://gstatic.com"></script>
-
   <script>
-    // 您的專屬 Firebase 美國伺服器設定憑證
-    const firebaseConfig = {
-      apiKey: "AIzaSyA0VTxTbo3qxT3e2ViJGqSg3SaZAmdyIC4",
-      authDomain: "://firebaseapp.com",
-      databaseURL: "https://firebaseio.com",
-      projectId: "pop-listopia",
-      storageBucket: "pop-listopia.firebasestorage.app",
-      messagingSenderId: "660982819274",
-      appId: "1:660982819274:web:7e11e6688209d8e0304733",
-      measurementId: "G-5WV47WF961"
-    };
-
-    // 初始化 Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const scoreRef = db.ref('global_clicks'); // 在雲端指向全網點擊總數欄位
+    // 📌 核心優化：改用最新穩定、走標準公共安全通路的全球計數 API V2 服務
+    // 我們幫您的專屬遊戲建立了全新的全球唯一命名空間 (pop_listopia_final_v2)
+    const getUrl = "https://counterapi.dev";
+    const hitUrl = "https://counterapi.dev/up";
 
     const catImage = document.getElementById('popcat');
     const countText = document.getElementById('count');
@@ -86,27 +70,55 @@
     const closeImg = "https://popcat.click";
     const openImg = "https://popcat.click";
 
-    // 💾 官方 WebSocket 即時雙向監聽：只要雲端數字變了，網頁會自動一秒更新，完全不延遲
-    scoreRef.on('value', function(snapshot) {
-      const data = snapshot.val();
-      // 如果雲端是空的，預設給它 0，否則顯示最新全球總數
-      countText.innerText = data !== null ? data : 0;
-    }, function(error) {
-      console.error("Firebase 連線遭拒:", error);
-      countText.innerText = "連線失敗";
-    });
+    let localScore = 0;
 
-    // 點擊觸發函數
+    // 💾 讀取雲端最新全球總數
+    function fetchGlobalClicks() {
+      fetch(getUrl)
+        .then(response => {
+          // 📌 關鍵優化：如果雲端資料庫是全新真空的，API 會回傳 404，我們在本地立刻將其初始化為 0，防止卡死
+          if (response.status === 404) {
+            return { value: 0 };
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data && data.value !== undefined) {
+            localScore = parseInt(data.value);
+            countText.innerText = localScore;
+          }
+        })
+        .catch(error => {
+          console.error("同步延遲處理中:", error);
+        });
+    }
+
+    // 網頁一打開，立刻執行一次全網同步讀取
+    fetchGlobalClicks();
+
+    // 🔄 每隔 2 秒自動在背景重新向雲端抓取一次全世界最新的總點擊數，達成全球即時同步
+    setInterval(fetchGlobalClicks, 2000);
+
+    // 點擊加分函數
     function pop() {
-      // 📌 核心加分：採用 Firebase 官方的 transaction 事務處理
-      // 當全世界幾百個人同時拿起手機、電腦瘋狂點擊時，Google 伺服器會自動排隊精準累加，數字絕對不卡死
-      scoreRef.transaction(function(currentClicks) {
-        return (currentClicks || 0) + 1;
-      });
+      // 本地數字先瞬間加 1，提供完美的打擊感
+      localScore++;
+      countText.innerText = localScore;
 
       catImage.src = openImg;
       audio.currentTime = 0;
       audio.play();
+
+      // 📌 直接利用公共計數通道發送 hit 加分請求送上雲端
+      fetch(hitUrl)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.value !== undefined) {
+            localScore = data.value;
+            countText.innerText = localScore;
+          }
+        })
+        .catch(error => console.error("雲端加分失敗:", error));
     }
 
     function unpop() {
@@ -117,7 +129,7 @@
     catImage.addEventListener('mousedown', pop);
     catImage.addEventListener('mouseup', unpop);
     catImage.addEventListener('touchstart', function(e) {
-      e.preventDefault(); // 優化手機連點體驗，防止觸發瀏覽器模擬滑鼠
+      e.preventDefault(); // 防止手機雙擊放大
       pop();
     });
     catImage.addEventListener('touchend', unpop);
