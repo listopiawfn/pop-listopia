@@ -55,22 +55,17 @@
 <div class="container">
 <div class="content">
 <h1 class="title">POP Listopia</h1>
- <!-- 秒速顯示儲存的次數 -->
-      <span class="times" id="count">0</span>
-      
-      <div class="image">
-        <!-- 高清去背貓咪圖片 -->
-        <img id="popcat" src="https://popcat.click" alt="popcat">
-      </div>
-    </div>
-  </div>
+<span class="times" id="count">0</span>
+<div class="image">
+<img id="popcat" src="https://popcat.click" alt="popcat">
+</div></div></div>
 
   <script>
     const catImage = document.getElementById('popcat');
     const countText = document.getElementById('count');
 
-    const closeImg = "popcat2.png";
-    const openImg = "popcat1.png";
+    const closeImg = "popcat1.png";
+    const openImg = "popcat2.png";
 
     // 💾 初始化分數：從本地瀏覽器記憶體安全讀取，重開機、關網頁都不會消失
     let score = localStorage.getItem('popcat_score') ? parseInt(localStorage.getItem('popcat_score')) : 0;
