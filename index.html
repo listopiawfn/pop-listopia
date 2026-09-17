@@ -36,86 +36,9 @@
 </div></div></div>
 
 <script type="module">
-  // 🌐 這裡已經修正為完全正確的 Google 官方雲端路徑，絕不再卡死
-  import { initializeApp } from "https://gstatic.com";
-  import { getDatabase, ref, set, onValue } from "https://gstatic.com";
-
-  // 🔑 您的專屬 Firebase 密鑰資訊（這一段完全正確，不需要更動）
-  const firebaseConfig = {
-    apiKey: "AIzaSyBfCbo6UX00mIPqGWivDugWqJTxhZE0sik",
-    authDomain: "://firebaseapp.com",
-    databaseURL: "https://firebaseio.com",
-    projectId: "pop-listopia-b0fc9",
-    storageBucket: "pop-listopia-b0fc9.firebasestorage.app",
-    messagingSenderId: "987919903060",
-    appId: "1:987919903060:web:8ab07846abfa348aa340c1",
-    measurementId: "G-V826ZWFNQT"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const scoreRef = ref(db, 'game/total_score'); 
-
-  const catImage = document.getElementById('poplistopia');
-  const countText = document.getElementById('count');
-  const closeImg = "popcat1.png";
-  const openImg = "popcat2.png";
-
-  let score = 0;
-  let isConnected = false;
-
-  // ☁️ 監聽雲端資料庫：一成功讀取到分數，就立刻換掉「連線中...」文字
-  onValue(scoreRef, (snapshot) => {
-    const data = snapshot.val();
-    score = data ? parseInt(data) : 0;
-    countText.innerText = score;
-    isConnected = true; 
-  });
-
-  // 點擊動作控制
-  function handlePop() {
-    if (!isConnected) return; // 沒連上雲端資料庫前，點擊不反應
-    score++;
-    countText.innerText = score;
-    set(scoreRef, score); // 把點擊後的最新數字送回雲端
-    catImage.src = openImg; // 貓咪張嘴
-    catImage.style.transform = "scale(0.95)"; // 點擊時圖片微微縮小，像真按鈕
-    catImage.style.transition = "transform 0.05s ease";
-  }
-
-  function handleUnpop() {
-    catImage.src = closeImg; // 手指放開，貓咪閉嘴
-    catImage.style.transform = "scale(1)"; // 恢復原本大小
-  }
-
-  // 自動相容電腦滑鼠點擊與手機手指狂點
-  catImage.addEventListener('pointerdown', function(e) {
-    e.preventDefault(); 
-    handlePop();
-  });
-  
-  catImage.addEventListener('pointerup', function(e) {
-    e.preventDefault();
-    handleUnpop();
-  });
-  
-  catImage.addEventListener('pointerleave', function(e) {
-    e.preventDefault();
-    handleUnpop(); 
-  });
-
-  // 🔑 【版主隱藏密碼功能】快速同時按 Ctrl + Shift + K 歸零
-  window.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
-      const password = prompt('請輸入版主重設密碼：');
-      if (password === 'admin123') {
-        set(scoreRef, 0);
-        alert('版主身份驗證成功，全球雲端點擊次數已成功歸零重置！');
-      } else if (password !== null) {
-        alert('密碼錯誤，拒絕重設！');
-      }
-    }
-  });
+import { initializeApp } from "gstatic.com";
+   import { getDatabase, ref, set, onValue } from "gstatic.com";
+   const firebaseConfig = {apiKey: "AIzaSyBfCbo6UX00mIPqGWivDugWqJTxhZE0sik",authDomain: "firebaseapp.com",databaseURL: "firebaseio.com",projectId: "pop-listopia-b0fc9",storageBucket: "pop-listopia-b0fc9.firebasestorage.app",messagingSenderId: "987919903060",appId: "1:987919903060:web:8ab07846abfa348aa340c1",measurementId: "G-V826ZWFNQT"};const app = initializeApp(firebaseConfig);const db = getDatabase(app);const scoreRef = ref(db, 'game/total_score');const catImage = document.getElementById('poplistopia');const countText = document.getElementById('count');const closeImg = "popcat1.png";const openImg = "popcat2.png";let score = 0;let isConnected = false;onValue(scoreRef, (snapshot) => {const data = snapshot.val();score = data ? parseInt(data) : 0;countText.innerText = score;isConnected = true;});catImage.addEventListener('pointerdown', function(e) {e.preventDefault();if (!isConnected) return;score++;countText.innerText = score;set(scoreRef, score);catImage.src = openImg;catImage.style.transform = "scale(0.95)";catImage.style.transition = "transform 0.05s ease";});catImage.addEventListener('pointerup', function(e) {e.preventDefault();catImage.src = closeImg;catImage.style.transform = "scale(1)";});catImage.addEventListener('pointerleave', function(e) {e.preventDefault();catImage.src = closeImg;catImage.style.transform = "scale(1)";});window.addEventListener('keydown', function(e) {if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {const password = prompt('請輸入版主重設密碼：');if (password === 'admin123') {set(scoreRef, 0);alert('版主身份驗證成功，全球雲端點擊次數已成功歸零重置！');} else if (password !== null) {alert('密碼錯誤，拒絕重設！');}}});
 </script>
 </body>
 </html>
