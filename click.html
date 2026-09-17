@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pop Listopia</title>
+  
+  <!-- 引入雲端特殊字體 -->
+  <link href="https://googleapis.com" rel="stylesheet">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center; 
+      text-align: center;
+      font-family: "Caesar Dressing", cursive;
+      color: #000;
+      user-select: none; 
+    }
+    .content .title {
+      font-size: 60px;
+      letter-spacing: 10px;
+      margin: 0 0 20px 0;
+    }
+    .content .times {
+      font-size: 40px;
+    }
+    .content .image {
+      width: 300px;
+      cursor: pointer; 
+    }
+    .image img {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="content">
+      <h1 class="title">POP Listopia</h1>
+      <!-- 秒速顯示儲存的次數 -->
+      <span class="times" id="count">0</span>
+      
+      <div class="image">
+        <!-- 高清去背貓咪圖片 -->
+        <img id="popcat" src="https://popcat.click" alt="popcat">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const catImage = document.getElementById('popcat');
+    const countText = document.getElementById('count');
+
+    const closeImg = "https://popcat.click";
+    const openImg = "https://popcat.click";
+
+    // 💾 初始化分數：從本地瀏覽器記憶體安全讀取，重開機、關網頁都不會消失
+    let score = localStorage.getItem('popcat_score') ? parseInt(localStorage.getItem('popcat_score')) : 0;
+    countText.innerText = score;
+
+    // 點擊觸發函數
+    function pop() {
+      score++;
+      countText.innerText = score;
+
+      // 💾 即時在瀏覽器空間寫入最新的分數紀錄
+      localStorage.setItem('popcat_score', score);
+
+      catImage.src = openImg;
+    }
+
+    function unpop() {
+      catImage.src = closeImg;
+    }
+
+    // 事件監聽（相容電腦滑鼠與手機觸控，全面優化防止連點卡頓）
+    catImage.addEventListener('mousedown', pop);
+    catImage.addEventListener('mouseup', unpop);
+    catImage.addEventListener('touchstart', function(e) {
+      e.preventDefault(); // 優化手機瘋狂連點
+      pop();
+    });
+    catImage.addEventListener('touchend', unpop);
+
+    // 🔑 【版主隱藏暗號功能】畫面上不會出現任何按鈕！
+    // 只要您在網頁的畫面上任何地方，快速同時按下鍵盤的 Ctrl + Shift + K 三個鍵
+    window.addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
+        
+        // 彈出一個隱藏視窗詢問密碼
+        const password = prompt('請輸入版主重設密碼：');
+        
+        // 💡 密碼預設為：admin123
+        if (password === 'admin123') {
+          score = 0;
+          countText.innerText = score;
+          localStorage.removeItem('popcat_score');
+          alert('版主身份驗證成功，點擊次數已成功歸零重置！');
+        } else if (password !== null) {
+          alert('密碼錯誤，拒絕重設！');
+        }
+      }
+    });
+  </script>
+</body>
+</html>
