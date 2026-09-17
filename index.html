@@ -4,8 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POP Listopia</title>
-<!-- 💡 修正：使用 fonts. 網域，字體才會正常顯示 -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://googleapis.com">
 <link rel="preconnect" href="https://gstatic.com" crossorigin>
 <link href="https://googleapis.com" rel="stylesheet">
 
@@ -30,18 +29,17 @@
 <div class="container">
 <div class="content">
 <h1 class="title">POP Listopia</h1>
-<!-- 預設顯示連線中，Firebase 回傳資料後會自動變分數 -->
 <span class="times" id="count">連線中...</span>
 <div class="image">
 <img id="poplistopia" src="popcat1.png" alt="poplistopia" draggable="false">
 </div></div></div>
 
 <script type="module">
-  // 🌐 使用穩定版的 Firebase CDN 模組路徑
+  // 🌐 引入官方指定最新穩定版 Firebase CDN 模組路徑
   import { initializeApp } from "https://gstatic.com";
   import { getDatabase, ref, set, onValue } from "https://gstatic.com";
 
-  // 🔑 保留您完全正確的專屬 Firebase 設定密鑰
+  // 🔑 您的專屬 Firebase 設定密鑰
   const firebaseConfig = {
     apiKey: "AIzaSyBfCbo6UX00mIPqGWivDugWqJTxhZE0sik",
     authDomain: "://firebaseapp.com",
@@ -64,44 +62,37 @@
 
   let score = 0;
 
-  // ☁️ 監聽雲端資料庫
+  // ☁️ 監聽雲端資料庫更新
   onValue(scoreRef, (snapshot) => {
     const data = snapshot.val();
     score = data ? parseInt(data) : 0;
     countText.innerText = score;
   });
 
-  // 💡【修正 1】強制掛載到全域 Window，確保開口函數 100% 執行
-  window.pop = function() {
-    score++;
-    countText.innerText = score;
-    set(scoreRef, score); // 寫入雲端
-    catImage.src = openImg; // 換張嘴圖
-    catImage.style.transform = "scale(0.95)"; // 點擊微縮動效
-  };
-
-  window.unpop = function() {
-    catImage.src = closeImg; // 換閉嘴圖
-    catImage.style.transform = "scale(1)";
-  };
-
-  // 💡【修正 2】在模組化中精準綁定 Pointer 事件
+  // 💡【重構優化】直接將邏輯封裝在監聽器內部，消除 module 作用域問題
   catImage.addEventListener('pointerdown', function(e) {
     e.preventDefault(); 
-    window.pop();
+    score++;
+    countText.innerText = score;
+    set(scoreRef, score); // 更新雲端
+    catImage.src = openImg; // 切換張嘴
+    catImage.style.transform = "scale(0.95)"; // 點擊縮小動效
+    catImage.style.transition = "transform 0.05s ease";
   });
   
   catImage.addEventListener('pointerup', function(e) {
     e.preventDefault();
-    window.unpop();
+    catImage.src = closeImg; // 切換閉嘴
+    catImage.style.transform = "scale(1)";
   });
   
   catImage.addEventListener('pointerleave', function(e) {
     e.preventDefault();
-    window.unpop(); 
+    catImage.src = closeImg; 
+    catImage.style.transform = "scale(1)";
   });
 
-  // 🔑 【版主隱藏功能】Ctrl + Shift + K 歸零
+  // 🔑 【版主隱藏重設功能】Ctrl + Shift + K 歸零
   window.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
       const password = prompt('請輸入版主重設密碼：');
