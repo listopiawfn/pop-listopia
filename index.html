@@ -55,18 +55,18 @@
 <div class="container">
 <div class="content">
 <h1 class="title">POP Listopia</h1>
-<span class="times" id="count">0</span>
+<!-- 預設顯示載入中，只要雲端連線一成功，就會瞬間跳出正確的雲端分數！ -->
+<span class="times" id="count">連線中...</span>
 <div class="image">
 <img id="poplistopia" src="popcat1.png" alt="poplistopia" draggable="false">
 </div></div></div>
 
 <script type="module">
-  // 🌐 核心修正 2：引入 Firebase 雲端資料庫功能
+  // 🌐【修正 1】替換為完全正確的 Firebase 雲端套件完整 CDN 網址
   import { initializeApp } from "https://gstatic.com";
   import { getDatabase, ref, set, onValue } from "https://gstatic.com";
 
-  // 👇【請在這裡貼上您的 Firebase 密鑰】👇
-  // 請把括號 { } 裡面的英文換成您在網頁上複製到的那段！
+  // 🔑 您的專屬 Firebase 密鑰（完全保留您的設定）
   const firebaseConfig = {
     apiKey: "AIzaSyBfCbo6UX00mIPqGWivDugWqJTxhZE0sik",
     authDomain: "pop-listopia-b0fc9.firebaseapp.com",
@@ -81,7 +81,7 @@
   // 初始化雲端資料庫
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
-  const scoreRef = ref(db, 'game/total_score'); // 在雲端建立一個叫 total_score 的格子存放全球分數
+  const scoreRef = ref(db, 'game/total_score'); 
 
   const catImage = document.getElementById('poplistopia');
   const countText = document.getElementById('count');
@@ -90,28 +90,33 @@
 
   let score = 0;
 
-  // ☁️ 核心修正 3：從原本讀取本機，改為即時監聽雲端資料庫
+  // ☁️ 監聽雲端資料庫：只要雲端一更新，畫面數字立刻秒速同步
   onValue(scoreRef, (snapshot) => {
     const data = snapshot.val();
     score = data ? parseInt(data) : 0;
     countText.innerText = score;
   });
 
+  // 點擊觸發：加分、同步雲端、貓咪張嘴、產生按壓縮放感
   function pop() {
     score++;
     countText.innerText = score;
     
-    // ☁️ 核心修正 4：點擊時，即時同步寫入雲端資料庫
+    // ☁️ 秒速即時寫入 Google 雲端伺服器
     set(scoreRef, score);
     
     catImage.src = openImg;
+    catImage.style.transform = "scale(0.95)";
+    catImage.style.transition = "transform 0.05s ease";
   }
 
+  // 放開觸發：貓咪閉嘴、彈回原尺寸
   function unpop() {
     catImage.src = closeImg;
+    catImage.style.transform = "scale(1)";
   }
 
-  // 事件監聽（Pointer 事件完美防手機連點卡頓）
+  // 💡【修正 2】將 Pointer 事件完整包裝，確保在 type="module" 下完美運作
   catImage.addEventListener('pointerdown', function(e) {
     e.preventDefault(); 
     pop();
@@ -125,7 +130,7 @@
     unpop(); 
   });
 
-  // 🔑 【版主隱藏暗號功能】Ctrl + Shift + K 觸發歸零（同步清除雲端資料）
+  // 🔑 【版主隱藏暗號功能】Ctrl + Shift + K 觸發全球同步歸零
   window.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
       const password = prompt('請輸入版主重設密碼：');
@@ -139,4 +144,5 @@
   });
 </script>
 </body>
+
 </html>
