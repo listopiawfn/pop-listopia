@@ -60,30 +60,24 @@
 <img id="poplistopia" src="popcat1.png" alt="poplistopia">
 </div></div></div>
 
-  <script>
-    const catImage = document.getElementById('popcat');
-    const countText = document.getElementById('count');
+<script>
+  const catImage = document.getElementById('popcat');
+  const countText = document.getElementById('count');
+  const closeImg = "popcat1.png";
+  const openImg = "popcat2.png";
 
-    const closeImg = "popcat1.png";
-    const openImg = "popcat2.png";
+  let score = localStorage.getItem('popcat_score') ? parseInt(localStorage.getItem('popcat_score')) : 0;
+  countText.innerText = score;
 
-    // 💾 初始化分數：從本地瀏覽器記憶體安全讀取，重開機、關網頁都不會消失
-    let score = localStorage.getItem('popcat_score') ? parseInt(localStorage.getItem('popcat_score')) : 0;
+  function pop() {
+    score++;
     countText.innerText = score;
-
-    // 點擊觸發函數
-    function pop() {
-      score++;
-      countText.innerText = score;
-
-      // 💾 即時在瀏覽器空間寫入最新的分數紀錄
-      localStorage.setItem('popcat_score', score);
-
-      catImage.src = openImg;
+    localStorage.setItem('popcat_score', score);
+    catImage.src = openImg;
     }
 
-    function unpop() {
-      catImage.src = closeImg;
+  function unpop() {
+    catImage.src = closeImg;
     }
 
     // 事件監聽（相容電腦滑鼠與手機觸控，全面優化防止連點卡頓）
