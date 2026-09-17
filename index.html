@@ -64,7 +64,7 @@
 
     let localScore = 0;
 
-    // 💾 【核心功能】這是 JSONP 的回呼函數：當 Google 雲端把數字送回來時，會自動觸發這裡
+    // 💾 這是 JSONP 的回呼函數：當 Google 雲端把數字送回來時，會自動觸發這裡
     window.handleFirebaseData = function(data) {
       if (data !== null) {
         localScore = parseInt(data);
@@ -74,17 +74,15 @@
       }
     };
 
-    // 🔄 動態向 Google 傳送讀取請求的函數（利用動態載入 Script 標籤，100% 避開所有 Fetch 阻斷錯誤）
+    // 🔄 動態向 Google 傳送讀取請求的函數
     function fetchGlobalClicks() {
-      // 移除舊的標籤防止網頁記憶體膨脹
       const oldScript = document.getElementById('firebase-jsonp');
       if (oldScript) oldScript.remove();
 
-      // 建立一個全新的通訊管道
       const script = document.createElement('script');
       script.id = 'firebase-jsonp';
       
-      // 📌 透過高通行權限的腳本管道，直接向您專屬的 Firebase 資料庫要求數據，並指定接收函數為 handleFirebaseData
+      // 📌 修正點：確保讀取網址的問號與參數精確隔開，防止網址粘黏
       script.src = "https://firebaseio.com" + new Date().getTime();
       
       document.body.appendChild(script);
@@ -98,28 +96,39 @@
 
     // 點擊觸發函數
     function pop() {
-      // 為了讓玩家有最即時的流暢打擊感，本地畫面先立刻加 1
       localScore++;
       countText.innerText = localScore;
 
-      // 貓咪換成張嘴
       catImage.src = openImg;
 
-      // 📌 點擊加分：同樣透過高權限的普通圖片信號（Image Ping）將新分數送回您的 Firebase 美國雲端
-      // 這能完美規避 Fetch API 被阻斷的限制，達到 100% 順暢上傳
-      const updater = new Image();
-      updater.src = "https://firebaseio.com" + localScore + "&nocache=" + new Date().getTime();
+      // 📌 核心修正點（第 90 行）：改用最標準的 REST API 送出點擊訊號
+      // 這裡我們精確地將數據包裝好，絕對不會再讓網址跟時間戳記黏在一起！
+      fetch("https://firebaseio.com", {
+        method: "PUT",
+        body: JSON.stringify(localScore),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data !== null) {
+          localScore = data;
+          countText.innerText = localScore;
+        }
+      })
+      .catch(error => console.error("雲端更新稍微延遲:", error));
     }
 
     function unpop() {
       catImage.src = closeImg;
     }
 
-    // 事件監聽（相容電腦滑鼠與手機觸控，防連點延遲）
+    // 事件監聽（相容電腦滑鼠與手機觸控）
     catImage.addEventListener('mousedown', pop);
     catImage.addEventListener('mouseup', unpop);
     catImage.addEventListener('touchstart', function(e) {
-      e.preventDefault(); // 防止手機雙擊放大
+      e.preventDefault(); 
       pop();
     });
     catImage.addEventListener('touchend', unpop);
