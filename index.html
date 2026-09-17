@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pop Listopia</title>
   
-  <!-- 引入真正的 Google 雲端字體連結 -->
   <link href="https://googleapis.com" rel="stylesheet">
 
   <style>
@@ -45,86 +44,59 @@
   <div class="container">
     <div class="content">
       <h1 class="title">POP Listopia</h1>
-      <!-- 初始連線狀態 -->
       <span class="times" id="count">連線中...</span>
       
       <div class="image">
-        <!-- 預設去背閉嘴貓咪 -->
         <img id="popcat" src="https://popcat.click" alt="popcat">
       </div>
     </div>
   </div>
 
+  <!-- 📌 經典經典連線版：在重新上傳後能 100% 綠燈放行 -->
+  <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
+
   <script>
-    const catImage = document.getElementById('popcat');
-    const countText = document.getElementById('count');
-
-    const closeImg = "https://popcat.click";
-    const openImg = "https://popcat.click";
-
-    let localScore = 0;
-
-    // 💾 這是 JSONP 的回呼函數：當 Google 雲端把數字送回來時，會自動觸發這裡
-    window.handleFirebaseData = function(data) {
-      if (data !== null) {
-        localScore = parseInt(data);
-        countText.innerText = localScore;
-      } else {
-        countText.innerText = 0;
-      }
+    var firebaseConfig = {
+      apiKey: "AIzaSyA0VTxTbo3qxT3e2ViJGqSg3SaZAmdyIC4",
+      authDomain: "://firebaseapp.com",
+      databaseURL: "https://firebaseio.com",
+      projectId: "pop-listopia",
+      storageBucket: "pop-listopia.firebasestorage.app",
+      messagingSenderId: "660982819274",
+      appId: "1:660982819274:web:7e11e6688209d8e0304733",
+      measurementId: "G-5WV47WF961"
     };
 
-    // 🔄 動態向 Google 傳送讀取請求的函數
-    function fetchGlobalClicks() {
-      const oldScript = document.getElementById('firebase-jsonp');
-      if (oldScript) oldScript.remove();
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.database();
+    var scoreRef = db.ref('global_clicks'); 
 
-      const script = document.createElement('script');
-      script.id = 'firebase-jsonp';
-      
-      // 📌 修正點：確保讀取網址的問號與參數精確隔開，防止網址粘黏
-      script.src = "https://firebaseio.com" + new Date().getTime();
-      
-      document.body.appendChild(script);
-    }
+    var catImage = document.getElementById('popcat');
+    var countText = document.getElementById('count');
 
-    // 網頁一打開，立刻執行一次全網同步
-    fetchGlobalClicks();
+    var closeImg = "https://popcat.click";
+    var openImg = "https://popcat.click";
 
-    // 每 2 秒自動去雲端抓取全網玩家點出的最新總數，達成全球即時同步
-    setInterval(fetchGlobalClicks, 2000);
+    scoreRef.on('value', function(snapshot) {
+      var data = snapshot.val();
+      countText.innerText = data !== null ? data : 0;
+    }, function(error) {
+      console.error("Firebase 連線遭拒:", error);
+      countText.innerText = "連線失敗";
+    });
 
-    // 點擊觸發函數
     function pop() {
-      localScore++;
-      countText.innerText = localScore;
-
+      scoreRef.transaction(function(currentClicks) {
+        return (currentClicks || 0) + 1;
+      });
       catImage.src = openImg;
-
-      // 📌 核心修正點（第 90 行）：改用最標準的 REST API 送出點擊訊號
-      // 這裡我們精確地將數據包裝好，絕對不會再讓網址跟時間戳記黏在一起！
-      fetch("https://firebaseio.com", {
-        method: "PUT",
-        body: JSON.stringify(localScore),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data !== null) {
-          localScore = data;
-          countText.innerText = localScore;
-        }
-      })
-      .catch(error => console.error("雲端更新稍微延遲:", error));
     }
 
     function unpop() {
       catImage.src = closeImg;
     }
 
-    // 事件監聽（相容電腦滑鼠與手機觸控）
     catImage.addEventListener('mousedown', pop);
     catImage.addEventListener('mouseup', unpop);
     catImage.addEventListener('touchstart', function(e) {
