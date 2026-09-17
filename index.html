@@ -57,15 +57,18 @@
 <h1 class="title">POP Listopia</h1>
 <span class="times" id="count">0</span>
 <div class="image">
-<img id="poplistopia" src="popcat1.png" alt="poplistopia">
+<!-- 【已修正】維持 id="poplistopia"，並加上 draggable="false" 防止圖片被滑鼠扯走 -->
+<img id="poplistopia" src="popcat1.png" alt="poplistopia" draggable="false">
 </div></div></div>
 
 <script>
+  // 【已修正】這裡的 id 必須與上面的 HTML 完全一致，改為 'poplistopia'
   const catImage = document.getElementById('poplistopia');
   const countText = document.getElementById('count');
   const closeImg = "popcat1.png";
   const openImg = "popcat2.png";
 
+  // 💾 初始化分數：從本地瀏覽器記憶體安全讀取
   let score = localStorage.getItem('popcat_score') ? parseInt(localStorage.getItem('popcat_score')) : 0;
   countText.innerText = score;
 
@@ -74,40 +77,40 @@
     countText.innerText = score;
     localStorage.setItem('popcat_score', score);
     catImage.src = openImg;
-    }
+  }
 
   function unpop() {
     catImage.src = closeImg;
-    }
+  }
 
-    // 事件監聽（相容電腦滑鼠與手機觸控，全面優化防止連點卡頓）
-    catImage.addEventListener('mousedown', pop);
-    catImage.addEventListener('mouseup', unpop);
-    catImage.addEventListener('touchstart', function(e) {
-      e.preventDefault(); // 優化手機瘋狂連點
-      pop();
-    });
-    catImage.addEventListener('touchend', unpop);
+  // 💡【全面升級】使用現代 Pointer 事件，完美兼容滑鼠與觸控，解決手機放開不閉嘴與重複加分的漏洞
+  catImage.addEventListener('pointerdown', function(e) {
+    e.preventDefault(); 
+    pop();
+  });
+  catImage.addEventListener('pointerup', function(e) {
+    e.preventDefault();
+    unpop();
+  });
+  catImage.addEventListener('pointerleave', function(e) {
+    e.preventDefault();
+    unpop(); // 預防手指/滑鼠滑出圖片範圍時卡在張嘴狀態
+  });
 
-    // 🔑 【版主隱藏暗號功能】畫面上不會出現任何按鈕！
-    // 只要您在網頁的畫面上任何地方，快速同時按下鍵盤的 Ctrl + Shift + K 三個鍵
-    window.addEventListener('keydown', function(e) {
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
-        
-        // 彈出一個隱藏視窗詢問密碼
-        const password = prompt('請輸入版主重設密碼：');
-        
-        // 💡 密碼預設為：admin123
-        if (password === 'admin123') {
-          score = 0;
-          countText.innerText = score;
-          localStorage.removeItem('popcat_score');
-          alert('版主身份驗證成功，點擊次數已成功歸零重置！');
-        } else if (password !== null) {
-          alert('密碼錯誤，拒絕重設！');
-        }
+  // 🔑 【版主隱藏暗號功能】Ctrl + Shift + K 觸發歸零
+  window.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
+      const password = prompt('請輸入版主重設密碼：');
+      if (password === 'admin123') {
+        score = 0;
+        countText.innerText = score;
+        localStorage.removeItem('popcat_score');
+        alert('版主身份驗證成功，點擊次數已成功歸零重置！');
+      } else if (password !== null) {
+        alert('密碼錯誤，拒絕重設！');
       }
-    });
-  </script>
+    }
+  });
+</script>
 </body>
 </html>
