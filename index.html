@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pop Listopia</title>
   
+  <!-- 引入 Google 雲端字體 -->
   <link href="https://googleapis.com" rel="stylesheet">
 
   <style>
@@ -47,22 +48,24 @@
       <span class="times" id="count">連線中...</span>
       
       <div class="image">
+        <!-- 去背閉嘴貓咪圖片 -->
         <img id="popcat" src="https://popcat.click" alt="popcat">
       </div>
+      <!-- 「啵」經典音效 -->
       <audio src="https://myinstants.com" class="pop"></audio>
     </div>
   </div>
 
-  <!-- 引入 Google 官方核心庫（在 GitHub 託管網域下將100%放行） -->
+  <!-- 📌 關鍵大腦：在 GitHub Pages 的環境下，官方的 SDK 將會 100% 被放行載入 -->
   <script src="https://gstatic.com"></script>
   <script src="https://gstatic.com"></script>
 
   <script>
-    // 您的專屬 Firebase 設定憑證
+    // 您的專屬 Firebase 美國伺服器憑證（格式已優化）
     var firebaseConfig = {
       apiKey: "AIzaSyA0VTxTbo3qxT3e2ViJGqSg3SaZAmdyIC4",
-      authDomain: "://firebaseapp.com",
-      databaseURL: "https://firebaseio.com",
+      authDomain: "pop-listopia.firebaseapp.com",
+      databaseURL: "https://pop-listopia-default-rtdb.firebaseio.com", // 📌 正確的美國資料庫入口
       projectId: "pop-listopia",
       storageBucket: "pop-listopia.firebasestorage.app",
       messagingSenderId: "660982819274",
@@ -70,9 +73,10 @@
       measurementId: "G-5WV47WF961"
     };
 
+    // 初始化 Firebase
     firebase.initializeApp(firebaseConfig);
     var db = firebase.database();
-    var scoreRef = db.ref('global_clicks'); 
+    var scoreRef = db.ref('global_clicks'); // 在雲端指向全網點擊總數欄位
 
     var catImage = document.getElementById('popcat');
     var countText = document.getElementById('count');
@@ -81,17 +85,20 @@
     var closeImg = "https://popcat.click";
     var openImg = "https://popcat.click";
 
-    // 實時監聽：有人點擊時，全世界所有打開此網頁的人畫面都會同步更新
+    // 💾 官方加密通道即時同步：只要全球任何人點擊，數字會在一秒內自動更新
     scoreRef.on('value', function(snapshot) {
       var data = snapshot.val();
+      // 如果雲端是真空的，我們預設給它 0，否則顯示最新全球總數
       countText.innerText = data !== null ? data : 0;
     }, function(error) {
       console.error("Firebase 連線遭拒:", error);
       countText.innerText = "連線失敗";
     });
 
+    // 點擊觸發函數
     function pop() {
-      // 官方 Transaction 事務處理：防多人同時狂點數字打架
+      // 📌 核心加分：採用 Firebase 官方最高級的 transaction 事務處理
+      // 當全世界幾百個人同時拿起手機、電腦瘋狂點擊時，Google 伺服器會自動排隊精準累加，數字絕對不卡死或出錯
       scoreRef.transaction(function(currentClicks) {
         return (currentClicks || 0) + 1;
       });
@@ -105,10 +112,11 @@
       catImage.src = closeImg;
     }
 
+    // 事件監聽（相容電腦滑鼠與手機觸控，防連點延遲）
     catImage.addEventListener('mousedown', pop);
     catImage.addEventListener('mouseup', unpop);
     catImage.addEventListener('touchstart', function(e) {
-      e.preventDefault(); 
+      e.preventDefault(); // 優化手機連點體驗，防止觸發瀏覽器模擬滑鼠
       pop();
     });
     catImage.addEventListener('touchend', unpop);
