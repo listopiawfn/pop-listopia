@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pop Listopia</title>
   
-  <!-- 引入真正的 Google 雲端字體 -->
+  <!-- 引入真正的 Google 雲端字體連結 -->
   <link href="https://googleapis.com" rel="stylesheet">
 
   <style>
@@ -49,19 +49,15 @@
       <span class="times" id="count">連線中...</span>
       
       <div class="image">
-        <!-- 去背閉嘴貓咪圖片 -->
+        <!-- 預設去背閉嘴貓咪 -->
         <img id="popcat" src="https://popcat.click" alt="popcat">
       </div>
-      <!-- 「啵」經典音效 -->
+      <!-- 「啵」音效 -->
       <audio src="https://myinstants.com" class="pop"></audio>
     </div>
   </div>
 
   <script>
-    // 📌 核心修正：改用 100% 開放、無任何網域政策審查的公共實時計數伺服器
-    // 這裡我用您的專案名稱建立了全球唯一的專屬計數密鑰：pop_listopia_game_v2026
-    const baseApiUrl = "https://codetabs.com";
-
     const catImage = document.getElementById('popcat');
     const countText = document.getElementById('count');
     const audio = document.querySelector('.pop');
@@ -71,64 +67,60 @@
 
     let localScore = 0;
 
-    // 💾 讀取網路最新全網總點擊數
+    // 💾 這是 JSONP 的回呼函數：當 Google 雲端把數字送回來時，會自動觸發這裡
+    window.handleFirebaseData = function(data) {
+      if (data !== null) {
+        localScore = parseInt(data);
+        countText.innerText = localScore;
+      } else {
+        countText.innerText = 0;
+      }
+    };
+
+    // 🔄 動態向 Google 傳送讀取請求（✅ 修正點：將網址與隨時更新參數用 ? 精確隔開，防止黏在一起）
     function fetchGlobalClicks() {
-      // 傳送給公共通道獲取數值（本服務會回傳目前數字）
-      fetch(baseApiUrl)
-        .then(response => response.json())
-        .then(data => {
-          if (data && data.value !== undefined) {
-            localScore = parseInt(data.value);
-            countText.innerText = localScore;
-          }
-        })
-        .catch(error => {
-          console.error("同步延遲:", error);
-          // 若遇網路延遲，先維持本地數字
-          if (countText.innerText === "連線中...") {
-            countText.innerText = localScore;
-          }
-        });
+      const oldScript = document.getElementById('firebase-jsonp');
+      if (oldScript) oldScript.remove();
+
+      const script = document.createElement('script');
+      script.id = 'firebase-jsonp';
+      
+      // 📌 核心正確網址（結尾精確加上 /global_clicks.json）
+      script.src = "https://firebaseio.com" + new Date().getTime();
+      
+      document.body.appendChild(script);
     }
 
-    // 網頁一打開，立刻執行一次全網同步讀取
+    // 網頁一打開，立刻執行一次全網同步
     fetchGlobalClicks();
 
-    // 🔄 每隔 2 秒自動在背景重新向雲端抓取一次全世界最新的總點擊數，達成全球即時同步
+    // 每 2 秒自動去雲端抓取全網玩家點出的最新總數，達成全球即時同步
     setInterval(fetchGlobalClicks, 2000);
 
     // 點擊觸發函數
     function pop() {
-      // 為了讓玩家有流暢的打擊感，本地畫面先立刻加 1
       localScore++;
       countText.innerText = localScore;
 
-      // 貓咪換成張嘴
       catImage.src = openImg;
       audio.currentTime = 0;
       audio.play();
 
-      // 📌 點擊加分：利用標準的公共通道進行 hit 累加一動作
-      fetch(baseApiUrl + "&action=hit")
-        .then(response => response.json())
-        .then(data => {
-          if (data && data.value !== undefined) {
-            localScore = data.value;
-            countText.innerText = localScore;
-          }
-        })
-        .catch(error => console.error("雲端更新失敗:", error));
+      // 📌 點擊加分：採用普通圖片信號（Image Ping）將新分數送回您的 Firebase 美國雲端
+      // ✅ 修正點：精確補齊標準的 REST API URL 寫法，防止網域被混淆破壞
+      const updater = new Image();
+      updater.src = "https://firebaseio.com" + localScore + "&nocache=" + new Date().getTime();
     }
 
     function unpop() {
       catImage.src = closeImg;
     }
 
-    // 事件監聽（相容電腦滑鼠與手機觸控，全面優化防連點延遲）
+    // 事件監聽（相容電腦滑鼠與手機觸控）
     catImage.addEventListener('mousedown', pop);
     catImage.addEventListener('mouseup', unpop);
     catImage.addEventListener('touchstart', function(e) {
-      e.preventDefault(); // 防止手機雙擊放大
+      e.preventDefault(); 
       pop();
     });
     catImage.addEventListener('touchend', unpop);
