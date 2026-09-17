@@ -60,20 +60,50 @@
 <img id="poplistopia" src="popcat1.png" alt="poplistopia" draggable="false">
 </div></div></div>
 
-<script>
+<script type="module">
+  // 🌐 核心修正 2：引入 Firebase 雲端資料庫功能
+  import { initializeApp } from "https://gstatic.com";
+  import { getDatabase, ref, set, onValue } from "https://gstatic.com";
+
+  // 👇【請在這裡貼上您的 Firebase 密鑰】👇
+  // 請把括號 { } 裡面的英文換成您在網頁上複製到的那段！
+  const firebaseConfig = {
+    apiKey: "AIzaSyBfCbo6UX00mIPqGWivDugWqJTxhZE0sik",
+    authDomain: "pop-listopia-b0fc9.firebaseapp.com",
+    databaseURL: "https://pop-listopia-b0fc9-default-rtdb.firebaseio.com",
+    projectId: "pop-listopia-b0fc9",
+    storageBucket: "pop-listopia-b0fc9.firebasestorage.app",
+    messagingSenderId: "987919903060",
+    appId: "1:987919903060:web:8ab07846abfa348aa340c1",
+    measurementId: "G-V826ZWFNQT"
+  };
+
+  // 初始化雲端資料庫
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const scoreRef = ref(db, 'game/total_score'); // 在雲端建立一個叫 total_score 的格子存放全球分數
+
   const catImage = document.getElementById('poplistopia');
   const countText = document.getElementById('count');
   const closeImg = "popcat1.png";
   const openImg = "popcat2.png";
 
-  // 💾 初始化分數：從本地瀏覽器記憶體安全讀取
-  let score = localStorage.getItem('popcat_score') ? parseInt(localStorage.getItem('popcat_score')) : 0;
-  countText.innerText = score;
+  let score = 0;
+
+  // ☁️ 核心修正 3：從原本讀取本機，改為即時監聽雲端資料庫
+  onValue(scoreRef, (snapshot) => {
+    const data = snapshot.val();
+    score = data ? parseInt(data) : 0;
+    countText.innerText = score;
+  });
 
   function pop() {
     score++;
     countText.innerText = score;
-    localStorage.setItem('popcat_score', score);
+    
+    // ☁️ 核心修正 4：點擊時，即時同步寫入雲端資料庫
+    set(scoreRef, score);
+    
     catImage.src = openImg;
   }
 
@@ -81,7 +111,7 @@
     catImage.src = closeImg;
   }
 
-  // 💡【全面升級】使用現代 Pointer 事件，完美兼容滑鼠與觸控，解決手機放開不閉嘴與重複加分的漏洞
+  // 事件監聽（Pointer 事件完美防手機連點卡頓）
   catImage.addEventListener('pointerdown', function(e) {
     e.preventDefault(); 
     pop();
@@ -92,18 +122,16 @@
   });
   catImage.addEventListener('pointerleave', function(e) {
     e.preventDefault();
-    unpop(); // 預防手指/滑鼠滑出圖片範圍時卡在張嘴狀態
+    unpop(); 
   });
 
-  // 🔑 【版主隱藏暗號功能】Ctrl + Shift + K 觸發歸零
+  // 🔑 【版主隱藏暗號功能】Ctrl + Shift + K 觸發歸零（同步清除雲端資料）
   window.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
       const password = prompt('請輸入版主重設密碼：');
       if (password === 'admin123') {
-        score = 0;
-        countText.innerText = score;
-        localStorage.removeItem('popcat_score');
-        alert('版主身份驗證成功，點擊次數已成功歸零重置！');
+        set(scoreRef, 0); // 雲端歸零
+        alert('版主身份驗證成功，全球雲端點擊次數已成功歸零重置！');
       } else if (password !== null) {
         alert('密碼錯誤，拒絕重設！');
       }
