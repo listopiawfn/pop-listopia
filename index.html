@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pop Listopia</title>
   
-  <!-- 引入真正的 Google 雲端字體連結 -->
+  <!-- 引入真正的 Google 雲端字體 -->
   <link href="https://googleapis.com" rel="stylesheet">
 
   <style>
@@ -49,78 +49,72 @@
       <span class="times" id="count">連線中...</span>
       
       <div class="image">
-        <!-- 預設去背閉嘴貓咪 -->
+        <!-- 去背閉嘴貓咪圖片網址 -->
         <img id="popcat" src="https://popcat.click" alt="popcat">
       </div>
-      <!-- 「啵」音效 -->
-      <audio src="https://myinstants.com" class="pop"></audio>
+      <!-- 📌 聲音標籤已完全刪除 -->
     </div>
   </div>
 
+  <!-- 📌 載入官方標準核心庫，走 WebSocket 專用安全加密通道，徹底避開錯誤 -->
+  <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
+
   <script>
+    // 您的專屬 Firebase 設定憑證
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0VTxTbo3qxT3e2ViJGqSg3SaZAmdyIC4",
+      authDomain: "://firebaseapp.com",
+      databaseURL: "https://firebaseio.com",
+      projectId: "pop-listopia",
+      storageBucket: "pop-listopia.firebasestorage.app",
+      messagingSenderId: "660982819274",
+      appId: "1:660982819274:web:7e11e6688209d8e0304733",
+      measurementId: "G-5WV47WF961"
+    };
+
+    // 初始化 Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const scoreRef = db.ref('global_clicks'); 
+
     const catImage = document.getElementById('popcat');
     const countText = document.getElementById('count');
-    const audio = document.querySelector('.pop');
+    // 📌 聲音變數已完全刪除
 
     const closeImg = "https://popcat.click";
     const openImg = "https://popcat.click";
 
-    let localScore = 0;
-
-    // 💾 這是 JSONP 的回呼函數：當 Google 雲端把數字送回來時，會自動觸發這裡
-    window.handleFirebaseData = function(data) {
-      if (data !== null) {
-        localScore = parseInt(data);
-        countText.innerText = localScore;
-      } else {
-        countText.innerText = 0;
-      }
-    };
-
-    // 🔄 動態向 Google 傳送讀取請求（✅ 修正點：將網址與隨時更新參數用 ? 精確隔開，防止黏在一起）
-    function fetchGlobalClicks() {
-      const oldScript = document.getElementById('firebase-jsonp');
-      if (oldScript) oldScript.remove();
-
-      const script = document.createElement('script');
-      script.id = 'firebase-jsonp';
-      
-      // 📌 核心正確網址（結尾精確加上 /global_clicks.json）
-      script.src = "https://firebaseio.com" + new Date().getTime();
-      
-      document.body.appendChild(script);
-    }
-
-    // 網頁一打開，立刻執行一次全網同步
-    fetchGlobalClicks();
-
-    // 每 2 秒自動去雲端抓取全網玩家點出的最新總數，達成全球即時同步
-    setInterval(fetchGlobalClicks, 2000);
+    // 💾 官方 WebSocket 即時雙向監聽
+    scoreRef.on('value', function(snapshot) {
+      const data = snapshot.val();
+      // 如果雲端是空的，預設給它 0，否則顯示最新全球總數
+      countText.innerText = data !== null ? data : 0;
+    }, function(error) {
+      console.error("Firebase 連線遭拒:", error);
+      countText.innerText = "連線失敗";
+    });
 
     // 點擊觸發函數
     function pop() {
-      localScore++;
-      countText.innerText = localScore;
+      // 採用 Firebase 官方最高級的 transaction 事務處理，防止數字打架
+      scoreRef.transaction(function(currentClicks) {
+        return (currentClicks || 0) + 1;
+      });
 
       catImage.src = openImg;
-      audio.currentTime = 0;
-      audio.play();
-
-      // 📌 點擊加分：採用普通圖片信號（Image Ping）將新分數送回您的 Firebase 美國雲端
-      // ✅ 修正點：精確補齊標準的 REST API URL 寫法，防止網域被混淆破壞
-      const updater = new Image();
-      updater.src = "https://firebaseio.com" + localScore + "&nocache=" + new Date().getTime();
+      // 📌 聲音播放程式碼已完全刪除
     }
 
     function unpop() {
       catImage.src = closeImg;
     }
 
-    // 事件監聽（相容電腦滑鼠與手機觸控）
+    // 事件監聽（相容電腦滑鼠與手機觸控，優化瘋狂連點）
     catImage.addEventListener('mousedown', pop);
     catImage.addEventListener('mouseup', unpop);
     catImage.addEventListener('touchstart', function(e) {
-      e.preventDefault(); 
+      e.preventDefault(); // 優化手機連點體驗
       pop();
     });
     catImage.addEventListener('touchend', unpop);
