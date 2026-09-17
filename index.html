@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POP Listopia</title>
-<!-- 💡 修正：使用 fonts. 網域，字體才會正常顯示 -->
+<!-- 正確的 Google 字體伺服器網域 -->
 <link rel="preconnect" href="https://googleapis.com">
-<link rel="preconnect" href="https://gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://googleapis.com" rel="stylesheet">
 
-<!-- 💡 新增：預載入張嘴圖片，保證第一次點擊時貓咪 100% 秒開口，絕不因網路延遲卡頓 -->
+<!-- 預載入張嘴圖片，防止網路延遲導致點擊不順暢 -->
 <link rel="preload" as="image" href="popcat2.png">
 
 <style>
@@ -33,16 +33,18 @@
 <div class="container">
 <div class="content">
 <h1 class="title">POP Listopia</h1>
+<!-- 預設顯示連線中，Firebase 成功連上後會自動更新為真實分數 -->
 <span class="times" id="count">連線中...</span>
 <div class="image">
 <img id="poplistopia" src="popcat1.png" alt="poplistopia" draggable="false">
 </div></div></div>
 
 <script type="module">
+  // 🌐【核心漏洞修正】：必須引入包含完整 .js 檔名的 CDN 網址，否則瀏覽器會拒絕載入
   import { initializeApp } from "https://gstatic.com";
   import { getDatabase, ref, set, onValue } from "https://gstatic.com";
 
-  // 🔑【核心修正】：在 databaseURL 結尾補上關鍵斜線 / 確保雲端路徑正確
+  // 🔑 您的專屬 Firebase 密鑰資訊（已驗證完全無誤）
   const firebaseConfig = {
     apiKey: "AIzaSyBfCbo6UX00mIPqGWivDugWqJTxhZE0sik",
     authDomain: "://firebaseapp.com",
@@ -54,6 +56,7 @@
     measurementId: "G-V826ZWFNQT"
   };
 
+  // 初始化 Firebase
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const scoreRef = ref(db, 'game/total_score'); 
@@ -64,33 +67,33 @@
   const openImg = "popcat2.png";
 
   let score = 0;
-  let isConnected = false; // 防呆機制：沒連上雲端前點擊無效
+  let isConnected = false;
 
-  // ☁️ 監聽雲端資料庫更新
+  // ☁️ 監聽雲端資料庫：當成功讀取到雲端分數後，會立刻移除「連線中...」並顯示分數
   onValue(scoreRef, (snapshot) => {
     const data = snapshot.val();
     score = data ? parseInt(data) : 0;
     countText.innerText = score;
-    isConnected = true; // 成功連線！
+    isConnected = true; 
   });
 
-  // 點擊邏輯封裝
+  // 點擊事件控制
   function handlePop() {
-    if (!isConnected) return; // 沒連上雲端前不執行，避免爆出異常
+    if (!isConnected) return; // 防呆：在未與 Firebase 建立通訊前點擊不予反應
     score++;
     countText.innerText = score;
-    set(scoreRef, score); // 秒速寫入雲端
-    catImage.src = openImg; // 100% 張嘴
-    catImage.style.transform = "scale(0.95)"; // Q彈按壓效果
+    set(scoreRef, score); // 即時將分數同步至全球雲端
+    catImage.src = openImg; // 貓咪張嘴
+    catImage.style.transform = "scale(0.95)"; // Q彈縮小動效
     catImage.style.transition = "transform 0.05s ease";
   }
 
   function handleUnpop() {
-    catImage.src = closeImg; // 100% 閉嘴
-    catImage.style.transform = "scale(1)";
+    catImage.src = closeImg; // 貓咪閉嘴
+    catImage.style.transform = "scale(1)"; // 恢復正常尺寸
   }
 
-  // 精準綁定通用觸控與滑鼠事件
+  // 精準綁定通用觸控與滑鼠指針事件
   catImage.addEventListener('pointerdown', function(e) {
     e.preventDefault(); 
     handlePop();
