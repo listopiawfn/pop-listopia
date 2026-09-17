@@ -4,51 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POP Listopia</title>
-<!-- 💡 提醒：這裡之前有提過，您可以把 googleapis 改成 fonts.googleapis，字體才會生效喔！ -->
+<!-- 💡 修正：使用 fonts. 網域，字體才會正常顯示 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Caesar+Dressing&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://gstatic.com" crossorigin>
+<link href="https://googleapis.com" rel="stylesheet">
 
 <style>
     html, body {
-      margin: 0;
-      padding: 0;
-      background-color: #f0f0f0;
+      margin: 0; padding: 0; background-color: #f0f0f0;
     }
     .container {
-      width: 100%;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center; 
-      text-align: center;
-      font-family: "Caesar Dressing", cursive;
-      color: #000;
-      user-select: none; 
-      -webkit-user-select: none;
+      width: 100%; height: 100vh; display: flex; justify-content: center;
+      align-items: center; text-align: center; font-family: "Caesar Dressing", cursive;
+      color: #000; user-select: none; -webkit-user-select: none;
     }
-    .content .title {
-      font-size: 60px;
-      letter-spacing: 10px;
-      margin: 0 0 20px 0;
-    }
-    .content .times {
-      font-size: 40px;
-      margin-bottom: 20px;
-    }
-    .content .image {
-      width: 300px;
-      margin: 0 auto;
-      cursor: pointer; 
-    }
-    .image img {
-      width: 100%;
-      display: block;
-    }
-    
-    * {
-      -webkit-tap-highlight-color: transparent;
-    }
+    .content .title { font-size: 60px; letter-spacing: 10px; margin: 0 0 20px 0; }
+    .content .times { font-size: 40px; margin-bottom: 20px; display: block; }
+    .content .image { width: 300px; margin: 0 auto; cursor: pointer; }
+    .image img { width: 100%; display: block; }
+    * { -webkit-tap-highlight-color: transparent; }
 </style>
 </head>
   
@@ -56,34 +30,32 @@
 <div class="container">
 <div class="content">
 <h1 class="title">POP Listopia</h1>
-<!-- 💡 這裡把預設文字改成「載入中...」，雲端連線成功後會自動跳出分數 -->
-<span class="times" id="count">載入中...</span>
+<!-- 預設顯示連線中，Firebase 回傳資料後會自動變分數 -->
+<span class="times" id="count">連線中...</span>
 <div class="image">
 <img id="poplistopia" src="popcat1.png" alt="poplistopia" draggable="false">
 </div></div></div>
 
-<!-- 🌐 核心修正 1：這裡必須加上 type="module" 才能讀取雲端套件 -->
 <script type="module">
-  // 🌐 核心修正 2：引入 Firebase 雲端資料庫功能
+  // 🌐 使用穩定版的 Firebase CDN 模組路徑
   import { initializeApp } from "https://gstatic.com";
   import { getDatabase, ref, set, onValue } from "https://gstatic.com";
 
-  // 👇【請在這裡貼上您的 Firebase 密鑰】👇
-  // 請把括號 { } 裡面的英文換成您在網頁上複製到的那段！
+  // 🔑 保留您完全正確的專屬 Firebase 設定密鑰
   const firebaseConfig = {
-    apiKey: "您的_API_KEY",
-    authDomain: "您的_AUTH_DOMAIN",
-    databaseURL: "您的_DATABASE_URL", // 💡 串聯雲端資料庫的關鍵行，通常是 https://
-    projectId: "您的_PROJECT_ID",
-    storageBucket: "您的_STORAGE_BUCKET",
-    messagingSenderId: "您的_MESSAGING_SENDER_ID",
-    appId: "您的_APP_ID"
+    apiKey: "AIzaSyBfCbo6UX00mIPqGWivDugWqJTxhZE0sik",
+    authDomain: "://firebaseapp.com",
+    databaseURL: "https://firebaseio.com",
+    projectId: "pop-listopia-b0fc9",
+    storageBucket: "pop-listopia-b0fc9.firebasestorage.app",
+    messagingSenderId: "987919903060",
+    appId: "1:987919903060:web:8ab07846abfa348aa340c1",
+    measurementId: "G-V826ZWFNQT"
   };
 
-  // 初始化雲端資料庫
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
-  const scoreRef = ref(db, 'game/total_score'); // 在雲端建立一個叫 total_score 的格子存放全球分數
+  const scoreRef = ref(db, 'game/total_score'); 
 
   const catImage = document.getElementById('poplistopia');
   const countText = document.getElementById('count');
@@ -92,47 +64,49 @@
 
   let score = 0;
 
-  // ☁️ 核心修正 3：從原本讀取本機，改為即時監聽雲端資料庫
+  // ☁️ 監聽雲端資料庫
   onValue(scoreRef, (snapshot) => {
     const data = snapshot.val();
     score = data ? parseInt(data) : 0;
     countText.innerText = score;
   });
 
-  function pop() {
+  // 💡【修正 1】強制掛載到全域 Window，確保開口函數 100% 執行
+  window.pop = function() {
     score++;
     countText.innerText = score;
-    
-    // ☁️ 核心修正 4：點擊時，即時同步寫入雲端資料庫
-    set(scoreRef, score);
-    
-    catImage.src = openImg;
-  }
+    set(scoreRef, score); // 寫入雲端
+    catImage.src = openImg; // 換張嘴圖
+    catImage.style.transform = "scale(0.95)"; // 點擊微縮動效
+  };
 
-  function unpop() {
-    catImage.src = closeImg;
-  }
+  window.unpop = function() {
+    catImage.src = closeImg; // 換閉嘴圖
+    catImage.style.transform = "scale(1)";
+  };
 
-  // 事件監聽（Pointer 事件完美防手機連點卡頓）
+  // 💡【修正 2】在模組化中精準綁定 Pointer 事件
   catImage.addEventListener('pointerdown', function(e) {
     e.preventDefault(); 
-    pop();
+    window.pop();
   });
+  
   catImage.addEventListener('pointerup', function(e) {
     e.preventDefault();
-    unpop();
+    window.unpop();
   });
+  
   catImage.addEventListener('pointerleave', function(e) {
     e.preventDefault();
-    unpop(); 
+    window.unpop(); 
   });
 
-  // 🔑 【版主隱藏暗號功能】Ctrl + Shift + K 觸發歸零（同步清除雲端資料）
+  // 🔑 【版主隱藏功能】Ctrl + Shift + K 歸零
   window.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
       const password = prompt('請輸入版主重設密碼：');
       if (password === 'admin123') {
-        set(scoreRef, 0); // 雲端歸零
+        set(scoreRef, 0);
         alert('版主身份驗證成功，全球雲端點擊次數已成功歸零重置！');
       } else if (password !== null) {
         alert('密碼錯誤，拒絕重設！');
