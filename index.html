@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pop Listopia</title>
   
+  <!-- 引入真正的 Google 雲端字體 -->
   <link href="https://googleapis.com" rel="stylesheet">
 
   <style>
@@ -44,20 +45,39 @@
   <div class="container">
     <div class="content">
       <h1 class="title">POP Listopia</h1>
+      <!-- 初始連線狀態 -->
       <span class="times" id="count">連線中...</span>
       
       <div class="image">
+        <!-- 去背閉嘴貓咪圖片網址 -->
         <img id="popcat" src="https://popcat.click" alt="popcat">
       </div>
+      <!-- 「啵」音效網址 -->
       <audio src="https://myinstants.com" class="pop"></audio>
     </div>
   </div>
 
+  <!-- 📌 核心修正：載入官方標準核心與資料庫庫，走 WebSocket 專用安全加密通道 -->
+  <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
+
   <script>
-    // 📌 核心修正：改用防攔截的 CounterAPI 標準公用通道
-    // 我們幫您的專屬遊戲建立了獨立的命名空間 (pop_listopia_live)
-    const getUrl = "https://counterapi.dev";
-    const hitUrl = "https://counterapi.dev/up";
+    // 您的專屬 Firebase 美國伺服器設定憑證
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0VTxTbo3qxT3e2ViJGqSg3SaZAmdyIC4",
+      authDomain: "://firebaseapp.com",
+      databaseURL: "https://firebaseio.com",
+      projectId: "pop-listopia",
+      storageBucket: "pop-listopia.firebasestorage.app",
+      messagingSenderId: "660982819274",
+      appId: "1:660982819274:web:7e11e6688209d8e0304733",
+      measurementId: "G-5WV47WF961"
+    };
+
+    // 初始化 Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const scoreRef = db.ref('global_clicks'); // 在雲端指向全網點擊總數欄位
 
     const catImage = document.getElementById('popcat');
     const countText = document.getElementById('count');
@@ -66,65 +86,38 @@
     const closeImg = "https://popcat.click";
     const openImg = "https://popcat.click";
 
-    let localScore = 0;
-
-    // 💾 讀取雲端最新全球總數
-    function fetchGlobalClicks() {
-      fetch(getUrl)
-        .then(response => {
-          // 如果計數器在雲端是全新的，會回傳 404，我們手動視為 0
-          if (response.status === 404) return { value: 0 };
-          return response.json();
-        })
-        .then(data => {
-          if (data && data.value !== undefined) {
-            localScore = parseInt(data.value);
-            countText.innerText = localScore;
-          }
-        })
-        .catch(error => {
-          console.error("同步延遲:", error);
-          countText.innerText = "同步中...";
-        });
-    }
-
-    // 網頁打開立刻同步一次
-    fetchGlobalClicks();
-
-    // 🔄 每 2 秒自動在背景重新抓取一次全網最新總數，達成全球同步
-    setInterval(fetchGlobalClicks, 2000);
+    // 💾 官方 WebSocket 即時雙向監聽：只要雲端數字變了，網頁會自動一秒更新，完全不延遲
+    scoreRef.on('value', function(snapshot) {
+      const data = snapshot.val();
+      // 如果雲端是空的，預設給它 0，否則顯示最新全球總數
+      countText.innerText = data !== null ? data : 0;
+    }, function(error) {
+      console.error("Firebase 連線遭拒:", error);
+      countText.innerText = "連線失敗";
+    });
 
     // 點擊觸發函數
     function pop() {
-      // 本地數字先立刻加 1，維持流暢打擊感
-      localScore++;
-      countText.innerText = localScore;
+      // 📌 核心加分：採用 Firebase 官方的 transaction 事務處理
+      // 當全世界幾百個人同時拿起手機、電腦瘋狂點擊時，Google 伺服器會自動排隊精準累加，數字絕對不卡死
+      scoreRef.transaction(function(currentClicks) {
+        return (currentClicks || 0) + 1;
+      });
 
       catImage.src = openImg;
       audio.currentTime = 0;
       audio.play();
-
-      // 📌 點擊加分：利用標準的公共 hit 請求把分數送上雲端
-      fetch(hitUrl)
-        .then(response => response.json())
-        .then(data => {
-          if (data && data.value !== undefined) {
-            localScore = data.value;
-            countText.innerText = localScore;
-          }
-        })
-        .catch(error => console.error("加分失敗:", error));
     }
 
     function unpop() {
       catImage.src = closeImg;
     }
 
-    // 事件監聽（相容電腦與手機）
+    // 事件監聽（相容電腦滑鼠與手機觸控，防連點延遲）
     catImage.addEventListener('mousedown', pop);
     catImage.addEventListener('mouseup', unpop);
     catImage.addEventListener('touchstart', function(e) {
-      e.preventDefault(); 
+      e.preventDefault(); // 優化手機連點體驗，防止觸發瀏覽器模擬滑鼠
       pop();
     });
     catImage.addEventListener('touchend', unpop);
