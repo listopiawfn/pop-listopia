@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POP Listopia</title>
-<link rel="preconnect" href="https://googleapis.com">
-<link rel="preconnect" href="https://gstatic.com" crossorigin>
+<!-- 修正字型載入路徑 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://googleapis.com" rel="stylesheet">
 <link rel="preload" as="image" href="popcat2.png">
 <style>
@@ -36,9 +37,77 @@
 </div></div></div>
 
 <script type="module">
-import { initializeApp } from "gstatic.com";
-   import { getDatabase, ref, set, onValue } from "gstatic.com";
-   const firebaseConfig = {apiKey: "AIzaSyBfCbo6UX00mIPqGWivDugWqJTxhZE0sik",authDomain: "firebaseapp.com",databaseURL: "firebaseio.com",projectId: "pop-listopia-b0fc9",storageBucket: "pop-listopia-b0fc9.firebasestorage.app",messagingSenderId: "987919903060",appId: "1:987919903060:web:8ab07846abfa348aa340c1",measurementId: "G-V826ZWFNQT"};const app = initializeApp(firebaseConfig);const db = getDatabase(app);const scoreRef = ref(db, 'game/total_score');const catImage = document.getElementById('poplistopia');const countText = document.getElementById('count');const closeImg = "popcat1.png";const openImg = "popcat2.png";let score = 0;let isConnected = false;onValue(scoreRef, (snapshot) => {const data = snapshot.val();score = data ? parseInt(data) : 0;countText.innerText = score;isConnected = true;});catImage.addEventListener('pointerdown', function(e) {e.preventDefault();if (!isConnected) return;score++;countText.innerText = score;set(scoreRef, score);catImage.src = openImg;catImage.style.transform = "scale(0.95)";catImage.style.transition = "transform 0.05s ease";});catImage.addEventListener('pointerup', function(e) {e.preventDefault();catImage.src = closeImg;catImage.style.transform = "scale(1)";});catImage.addEventListener('pointerleave', function(e) {e.preventDefault();catImage.src = closeImg;catImage.style.transform = "scale(1)";});window.addEventListener('keydown', function(e) {if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {const password = prompt('請輸入版主重設密碼：');if (password === 'admin123') {set(scoreRef, 0);alert('版主身份驗證成功，全球雲端點擊次數已成功歸零重置！');} else if (password !== null) {alert('密碼錯誤，拒絕重設！');}}});
+// 修正：使用官方 www.gstatic.com 的完整 Firebase v10 CDN 路徑
+import { initializeApp } from "https://gstatic.com";
+import { getDatabase, ref, set, onValue } from "https://gstatic.com";
+
+const firebaseConfig = {
+   apiKey: "AIzaSyBfCbo6UX00mIPqGWivDugWqJTxhZE0sik",
+   authDomain: "firebaseapp.com",
+   databaseURL: "https://firebaseio.com", // 注意：通常完整路徑會包含 https:// 和 default-rtdb
+   projectId: "pop-listopia-b0fc9",
+   storageBucket: "pop-listopia-b0fc9.firebasestorage.app",
+   messagingSenderId: "987919903060",
+   appId: "1:987919903060:web:8ab07846abfa348aa340c1",
+   measurementId: "G-V826ZWFNQT"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const scoreRef = ref(db, 'game/total_score');
+
+const catImage = document.getElementById('poplistopia');
+const countText = document.getElementById('count');
+const closeImg = "popcat1.png";
+const openImg = "popcat2.png";
+
+let score = 0;
+let isConnected = false;
+
+// 監聽雲端分數變更
+onValue(scoreRef, (snapshot) => {
+   const data = snapshot.val();
+   score = data ? parseInt(data) : 0;
+   countText.innerText = score;
+   isConnected = true;
+});
+
+// 點擊事件
+catImage.addEventListener('pointerdown', function(e) {
+   e.preventDefault();
+   if (!isConnected) return;
+   score++;
+   countText.innerText = score;
+   set(scoreRef, score);
+   catImage.src = openImg;
+   catImage.style.transform = "scale(0.95)";
+   catImage.style.transition = "transform 0.05s ease";
+});
+
+catImage.addEventListener('pointerup', function(e) {
+   e.preventDefault();
+   catImage.src = closeImg;
+   catImage.style.transform = "scale(1)";
+});
+
+catImage.addEventListener('pointerleave', function(e) {
+   e.preventDefault();
+   catImage.src = closeImg;
+   catImage.style.transform = "scale(1)";
+});
+
+// 管理員快捷鍵（Ctrl + Shift + K）
+window.addEventListener('keydown', function(e) {
+   if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
+      const password = prompt('請輸入版主重設密碼：');
+      if (password === 'admin123') {
+         set(scoreRef, 0);
+         alert('版主身份驗證成功，全球雲端點擊次數已成功歸零重置！');
+      } else if (password !== null) {
+         alert('密碼錯誤，拒絕重設！');
+      }
+   }
+});
 </script>
 </body>
 </html>
