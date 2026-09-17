@@ -4,10 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POP Listopia</title>
-<!-- 修正字型載入路徑 -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://googleapis.com" rel="stylesheet">
+<link rel="preconnect" href="https://googleapis.com">
+<link rel="preconnect" href="https://gstatic.com" crossorigin>
+<link href="https://googleapis.com/css2?family=Caesar+Dressing&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="popcat2.png">
 <style>
    html, body {
@@ -30,21 +29,19 @@
 <div class="container">
 <div class="content">
 <h1 class="title">POP Listopia</h1>
-<!-- 剛打開時顯示連線中，連上 Google 伺服器後會立刻跳出真實數字 -->
 <span class="times" id="count">連線中...</span>
 <div class="image">
 <img id="poplistopia" src="popcat1.png" alt="poplistopia" draggable="false">
 </div></div></div>
 
 <script type="module">
-// 修正：使用官方 www.gstatic.com 的完整 Firebase v10 CDN 路徑
 import { initializeApp } from "https://gstatic.com";
 import { getDatabase, ref, set, onValue } from "https://gstatic.com";
 
 const firebaseConfig = {
    apiKey: "AIzaSyBfCbo6UX00mIPqGWivDugWqJTxhZE0sik",
    authDomain: "firebaseapp.com",
-   databaseURL: "https://firebaseio.com", // 注意：通常完整路徑會包含 https:// 和 default-rtdb
+   databaseURL: "https://firebaseio.com",
    projectId: "pop-listopia-b0fc9",
    storageBucket: "pop-listopia-b0fc9.firebasestorage.app",
    messagingSenderId: "987919903060",
@@ -64,7 +61,6 @@ const openImg = "popcat2.png";
 let score = 0;
 let isConnected = false;
 
-// 監聽雲端分數變更
 onValue(scoreRef, (snapshot) => {
    const data = snapshot.val();
    score = data ? parseInt(data) : 0;
@@ -72,7 +68,6 @@ onValue(scoreRef, (snapshot) => {
    isConnected = true;
 });
 
-// 點擊事件
 catImage.addEventListener('pointerdown', function(e) {
    e.preventDefault();
    if (!isConnected) return;
@@ -94,19 +89,6 @@ catImage.addEventListener('pointerleave', function(e) {
    e.preventDefault();
    catImage.src = closeImg;
    catImage.style.transform = "scale(1)";
-});
-
-// 管理員快捷鍵（Ctrl + Shift + K）
-window.addEventListener('keydown', function(e) {
-   if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
-      const password = prompt('請輸入版主重設密碼：');
-      if (password === 'admin123') {
-         set(scoreRef, 0);
-         alert('版主身份驗證成功，全球雲端點擊次數已成功歸零重置！');
-      } else if (password !== null) {
-         alert('密碼錯誤，拒絕重設！');
-      }
-   }
 });
 </script>
 </body>
